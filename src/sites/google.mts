@@ -2,6 +2,8 @@ import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
 
 export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
   linkCache = {}
+  isPrimarySite = true
+  resultCount = 0
 
   matchesSearchSite(location):boolean {
     console.log(`google matchesSearchSite: ${location}`)
