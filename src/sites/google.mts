@@ -79,7 +79,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
     if (queryType === 'image') {
       const results = document.querySelectorAll('div[data-ved][data-ow][data-oh]')
 
-      results.forEach(function (element) {
+      results.forEach((element) => {
         const titles = element.querySelectorAll('h3')
 
         if (titles.length > 0) {
@@ -162,7 +162,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
 
       console.log(`google web: ${results.length}`)
 
-      results.forEach(function (element) {
+      results.forEach((element) => {
         const titles = element.querySelectorAll('h3')
         const cites = element.querySelectorAll('cite')
 
