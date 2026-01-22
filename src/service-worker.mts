@@ -1,0 +1,100 @@
+import { WebmunkConfiguration } from '@bric/webmunk-core/extension'
+import webmunkCorePlugin, { WebmunkServiceWorkerModule, registerWebmunkModule, dispatchEvent } from '@bric/webmunk-core/service-worker'
+
+const stringToId = function (str:string) {
+  let id:number = str.length
+
+  let multiplier = 1
+
+  Array.from(str).forEach((it:string) => {
+    id += it.charCodeAt(0) * multiplier
+
+    multiplier *= 10
+  })
+
+  return id % 5000
+}
+
+export class WebmunkSearchSiteWorkerModule {
+  // TODO: Populate
+}
+
+class WebmunkSearchMirrorModule extends WebmunkServiceWorkerModule {
+  configuration = {}
+
+  fetchURLContent(request, sender, sendResponse) {
+    console.log('[Search Mirror] Fetching ' + request.url + '...')
+
+    if (request.content === 'fetch_url_content') {
+      const url = request.url
+
+      fetch(url, {
+        redirect: 'follow' // manual, *follow, error
+      })
+        .then(response => response.text())
+        .then(function (textBody) {
+          console.log('[Search Mirror] Fetched: ' + textBody)
+
+          sendResponse(textBody)
+        })
+
+      return true
+    }
+
+    return false
+  }
+
+  setup() {
+    webmunkCorePlugin.fetchConfiguration()
+      .then((configuration:WebmunkConfiguration) => {
+        this.configuration = configuration['search_mirror']
+
+        if (this.configuration === null || this.configuration === undefined) {
+          this.configuration = {}
+        }
+
+        let urlFilters = [
+          '||bing.com/',
+          '||www.bing.com/',
+          '||google.com/',
+          '||www.google.com/',
+          '||duckduckgo.com/'
+        ]
+
+        if (this.configuration['url-filters'] !== undefined) {
+          urlFilters = this.configuration['url-filters']
+        }
+
+        for (const urlFilter of urlFilters) {
+          const stripRule = {
+            id: stringToId('search-mirror-' + urlFilter),
+            priority: 1,
+            action: {
+              type: 'modifyHeaders' as const,
+              responseHeaders: [
+                { header: 'x-frame-options', operation: 'remove' as const},
+                { header: 'content-security-policy', operation: 'remove' as const }
+              ]
+            },
+            condition: { urlFilter, resourceTypes: ['main_frame' as const, 'sub_frame' as const] }
+          }
+
+          chrome.declarativeNetRequest.updateSessionRules({
+            addRules: [stripRule]
+          }, () => {
+            if (chrome.runtime['lastError']) {
+              console.log('[Search Mirror] ' + chrome.runtime['lastError'].message)
+            }
+          })
+
+          console.log('[Search Mirror] Added URL filter: ' + urlFilter)
+        }
+
+        console.log('[Search Mirror] Initialized.')
+      })
+  }
+}
+
+const plugin = new WebmunkSearchMirrorModule()
+
+export default plugin
