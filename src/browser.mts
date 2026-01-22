@@ -42,6 +42,12 @@ class SearchMirrorModule extends WebmunkClientModule {
 
         this.configuration = configuration['search_mirror']
 
+        if (this.configuration === undefined) {
+          this.configuration = {
+            enabled: true
+          }
+        }
+
         this.mutationObserver = new MutationObserver(() => {
           for (const callback of this.pageChangeListeners) {
             callback()
@@ -50,7 +56,7 @@ class SearchMirrorModule extends WebmunkClientModule {
 
         this.mutationObserver.observe(document, {subtree: true, childList: true});
 
-        console.log(`this.configuration.enabled: ${this.configuration.enabled}`)
+        console.log(`this.configuration: ${this.configuration}`)
 
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame
