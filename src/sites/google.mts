@@ -3,7 +3,10 @@ import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
 export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
   matchesSearchSite(location):boolean {
     console.log(`google matchesSearchSite: ${location}`)
-    if (['google.com', 'www.google.com'].includes(location) === false) {
+
+    const url = URL.parse(location)
+
+    if (['google.com', 'www.google.com'].includes(url.host) === false) {
       return false
     }
 
