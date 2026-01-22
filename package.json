@@ -20,7 +20,13 @@
     "exports": {
         "./extension": "./src/extension.mts",
         "./browser": "./src/browser.mts",
-        "./service-worker": "./src/service-worker.mts"
+        "./service-worker": "./src/service-worker.mts",
+        "./sites/browser/google": "./src/sites/google.mts",
+        "./sites/browser/bing": "./src/sites/bing.mts",
+        "./sites/browser/duckduckgo": "./src/sites/duckduckgo.mts",
+        "./sites/service-worker/google": "./src/sites/google_worker.mts",
+        "./sites/service-worker/bing": "./src/sites/bing_worker.mts",
+        "./sites/service-worker/duckduckgo": "./src/sites/duckduckgo_worker.mts"
     },
     "scripts": {
         "build": "tsc",
