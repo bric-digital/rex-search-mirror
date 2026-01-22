@@ -4,17 +4,15 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
   matchesSearchSite(location):boolean {
     console.log(`google matchesSearchSite: ${location}`)
 
-    const url = URL.parse(location)
-
-    if (['google.com', 'www.google.com'].includes(url.host) === false) {
+    if (['google.com', 'www.google.com'].includes(location.host) === false) {
       return false
     }
 
-    if (url.href.includes('/uviewer')) {
+    if (location.href.includes('/uviewer')) {
       return false
     }
 
-    const searchQuery = this.extractQuery(url.href)
+    const searchQuery = this.extractQuery(location)
 
     console.log(`google searchQuery: ${searchQuery}`)
 
