@@ -24,7 +24,7 @@ export class WebmunkSearchSiteWorkerModule {
 class WebmunkSearchMirrorModule extends WebmunkServiceWorkerModule {
   configuration = {}
 
-  configurationDetails() {
+  configurationDetails():any {
     return {
       search_mirror: {
         enabled: 'Boolean, true if module is active, false otherwise.',
