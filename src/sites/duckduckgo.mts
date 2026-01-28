@@ -1,6 +1,11 @@
 import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
 
 export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
+  linkCache = {}
+  isPrimarySite = true
+  resultCount = 0
+  recordedOverview = false
+
   matchesSearchSite(location):boolean {
     if (['duckduckgo.com'].includes(location.host) === false) {
       return false
@@ -61,7 +66,7 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
     return 'web'
   }
 
-  extractResults() {
+  extractResults(configuration) {
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
 
@@ -146,6 +151,50 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
           }
         }
       })
+    }
+
+    if (configuration['include_ai_elements']) {
+      if (this.recordedOverview === false) {
+        // AI Overview
+
+        window.setTimeout(() => {
+          const aiSvgPath = $('li:has(path[d="M3.375 6a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25zM8.5 9.375c0 .345-.28.625-.625.625H.625a.625.625 0 1 1 0-1.25h7.25c.345 0 .625.28.625.625M10.375 14a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25z"])')
+
+          aiSvgPath.each((index, item) => {
+            console.log('[Search Mirror / duckduckgo] Got AI result]')
+
+            this.recordedOverview = true
+            const content = $(item).get(0).innerHTML
+
+            const payload = {
+                  search_url: window.location.href,
+                  content,
+                  query,
+                  type: queryType,
+                  foreground: this.isPrimarySite,
+                  engine: 'duckduckgo'
+                }
+
+            console.log(payload)
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result-ai',
+                payload
+              }
+            })
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result',
+                payload
+              }
+            })
+          })
+        }, 15000)
+      }
     }
   }
 }

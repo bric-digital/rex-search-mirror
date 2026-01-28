@@ -6,7 +6,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
   linkCache = {}
   isPrimarySite = true
   resultCount = 0
-  recordedAI = false
+  recordedOverview = false
 
   matchesSearchSite(location):boolean {
     console.log(`google matchesSearchSite: ${location}`)
@@ -72,7 +72,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
     return 'web'
   }
 
-  extractResults() {
+  extractResults(configuration) {
     console.log('google extractResults')
     console.log(this)
     console.log(window.location)
@@ -214,8 +214,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
               query,
               type: queryType,
               foreground: this.isPrimarySite,
-              engine: 'google',
-              index: this.resultCount
+              engine: 'google'
             }
 
             console.log('[Search Mirror / google] Got result[' + this.resultCount + ']: ' + title)
@@ -233,8 +232,10 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
           }
         }
       })
+    }
 
-      if (this.recordedAI === false) {
+    if (configuration['include_ai_elements']) {
+      if (this.recordedOverview === false) {
         // AI Overview
 
         window.setTimeout(() => {
@@ -243,7 +244,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / google] Got AI result]')
 
-            this.recordedAI = true
+            this.recordedOverview = true
             const overview = $(item).parent().parent().parent().parent().parent()
 
             const content = overview.get(0).innerHTML

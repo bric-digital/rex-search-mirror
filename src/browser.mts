@@ -1,14 +1,12 @@
-import $ from 'jquery'
-
 import { WebmunkClientModule, registerWebmunkModule } from '@bric/webmunk-core/browser'
 import { WebmunkConfiguration } from '@bric/webmunk-core/extension'
 
 export class WebmunkSearchSiteBrowserModule {
-  matchesSearchSite(url):boolean {
+  matchesSearchSite(url):boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
     return false
   }
 
-  searchUrl(query, queryType):string|null {
+  searchUrl(query, queryType):string|null { // eslint-disable-line @typescript-eslint/no-unused-vars
     return null
   }
 }
@@ -105,8 +103,8 @@ class SearchMirrorModule extends WebmunkClientModule {
 
               console.log(`[Search Mirror] thisSearchSite: ${thisSearchSite}`)
 
-              this.registerPageChangeListener(function() {
-                thisSearchSite.extractResults()
+              this.registerPageChangeListener(() => {
+                thisSearchSite.extractResults(this.configuration)
               })
             } else {
               // console.log('[Search Mirror] ' + window.location.href + ' is not a search site. (primary)')
@@ -120,7 +118,7 @@ class SearchMirrorModule extends WebmunkClientModule {
               }
             }
 
-            if (this.configuration['secondary-sites'] !== undefined && this.configuration['secondary-sites'].includes(matchedSearchSiteKey) === false) {
+            if (this.configuration['secondary_sites'] !== undefined && this.configuration['secondary_sites'].includes(matchedSearchSiteKey) === false) {
               matchedSearchSiteKey = null
             }
 
@@ -131,7 +129,9 @@ class SearchMirrorModule extends WebmunkClientModule {
 
               thisSearchSite.isPrimarySite = false
 
-              this.configuration.registerModulePageChangeListener(thisSearchSite.extractResults)
+              this.registerPageChangeListener(() => {
+                thisSearchSite.extractResults(this.configuration)
+              })
             } else {
               // console.log('[Search Mirror] ' + window.location.href + ' is not a search site (secondary).')
             }

@@ -1,6 +1,11 @@
 import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
 
 export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
+  linkCache = {}
+  isPrimarySite = true
+  resultCount = 0
+  recordedOverview = false
+
   matchesSearchSite(location):boolean {
     if (['bing.com', 'www.bing.com'].includes(location.host) === false) {
       return false
@@ -53,12 +58,9 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
     return 'web'
   }
 
-  extractResults() {
+  extractResults(configuration) {
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
-    const linkCache = {}
-    let isPrimarySite = true
-    let resultCount = 0
 
     if (queryType === 'web') {
       const results = document.querySelectorAll('li.b_algo')
@@ -121,7 +123,7 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
             chrome.runtime.sendMessage({
               content: 'record_data_point',
               generator: 'search-mirror-result',
-              payload: payload // eslint-disable-line object-shorthand
+              payload
             })
 
             this.linkCache[href] = payload
@@ -205,6 +207,50 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
           }
         }
       })
+    }
+
+    if (configuration['include_ai_elements']) {
+      if (this.recordedOverview === false) {
+        // AI Overview
+
+        window.setTimeout(() => {
+          const aiSvgPath = $('li:has(path[d="m15.226 1.353-.348-1.07a.423.423 0 0 0-.799 0l-.348 1.07a2.2 2.2 0 0 1-1.377 1.397l-1.071.348a.423.423 0 0 0 0 .798l1.071.348a2.2 2.2 0 0 1 1.399 1.403l.348 1.07a.423.423 0 0 0 .798 0l.349-1.07a2.2 2.2 0 0 1 1.398-1.397l1.072-.348a.423.423 0 0 0 0-.798l-.022-.006-1.072-.348a2.2 2.2 0 0 1-1.398-1.397M19.018 7.965l.765.248.015.004a.303.303 0 0 1 0 .57l-.765.248a1.58 1.58 0 0 0-1 .999l-.248.764a.302.302 0 0 1-.57 0v-.002l-.249-.762a1.58 1.58 0 0 0-.999-1.002l-.765-.249a.303.303 0 0 1 0-.57l.765-.248a1.58 1.58 0 0 0 .984-.999l.249-.764a.302.302 0 0 1 .57 0l.249.764a1.58 1.58 0 0 0 .999.999"])')
+
+          aiSvgPath.each((index, item) => {
+            console.log('[Search Mirror / bing] Got AI result]')
+
+            this.recordedOverview = true
+            const content = $(item).get(0).innerHTML
+
+            const payload = {
+                  search_url: window.location.href,
+                  content,
+                  query,
+                  type: queryType,
+                  foreground: this.isPrimarySite,
+                  engine: 'bing'
+                }
+
+            console.log(payload)
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result-ai',
+                payload
+              }
+            })
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result',
+                payload
+              }
+            })
+          })
+        }, 15000)
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 import { WebmunkConfiguration } from '@bric/webmunk-core/extension'
-import webmunkCorePlugin, { WebmunkServiceWorkerModule, registerWebmunkModule, dispatchEvent } from '@bric/webmunk-core/service-worker'
+import webmunkCorePlugin, { WebmunkServiceWorkerModule } from '@bric/webmunk-core/service-worker'
 
 const stringToId = function (str:string) {
   let id:number = str.length
