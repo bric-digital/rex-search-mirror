@@ -21,6 +21,10 @@ class SearchMirrorModule extends WebmunkClientModule {
     super()
   }
 
+  toString():string {
+    return 'SearchMirrorModule (overrride in subclasses)'
+  }
+
   insertMirrorSite(identifier, location) {
     const wrapper = document.createElement('div')
 
