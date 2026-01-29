@@ -19,8 +19,6 @@ export class WebmunkDDGSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
         const query = searchUrl.searchParams.get('q')
 
         if (query !== null && query !== '') {
-          // console.log(details)
-
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
@@ -33,8 +31,6 @@ export class WebmunkDDGSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
 
               const dataJson = JSON.parse(data)
 
-              // console.log(dataJson)
-
               const dataPayload = []
 
               dataJson.forEach(function (suggestion) {
@@ -44,9 +40,6 @@ export class WebmunkDDGSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
                   data: suggestion
                 })
               })
-
-              // console.log('[Search Mirror / duckduckgo] Data Payload (Parsed):')
-              // console.log(dataPayload)
 
               payload['suggestions'] = dataPayload
 

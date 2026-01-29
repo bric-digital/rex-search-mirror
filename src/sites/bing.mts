@@ -118,7 +118,6 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
             }
 
             console.log('[Search Mirror / bing] Got result[' + this.resultCount + ']: ' + title)
-            // console.log(payload)
 
             chrome.runtime.sendMessage({
               content: 'record_data_point',
@@ -183,7 +182,6 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
             }
 
             console.log('[Search Mirror / bing] Got result[' + this.resultCount + ']: ' + title)
-            // console.log(payload)
 
             if (imageHref !== null) {
               // window.cookieManagerPopulateContent(imageHref, title, payload, 'image_url@', function () {
@@ -213,13 +211,14 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
       if (this.recordedOverview === false) {
         // AI Overview
 
+        this.recordedOverview = true
+
         window.setTimeout(() => {
           const aiSvgPath = $('li:has(path[d="m15.226 1.353-.348-1.07a.423.423 0 0 0-.799 0l-.348 1.07a2.2 2.2 0 0 1-1.377 1.397l-1.071.348a.423.423 0 0 0 0 .798l1.071.348a2.2 2.2 0 0 1 1.399 1.403l.348 1.07a.423.423 0 0 0 .798 0l.349-1.07a2.2 2.2 0 0 1 1.398-1.397l1.072-.348a.423.423 0 0 0 0-.798l-.022-.006-1.072-.348a2.2 2.2 0 0 1-1.398-1.397M19.018 7.965l.765.248.015.004a.303.303 0 0 1 0 .57l-.765.248a1.58 1.58 0 0 0-1 .999l-.248.764a.302.302 0 0 1-.57 0v-.002l-.249-.762a1.58 1.58 0 0 0-.999-1.002l-.765-.249a.303.303 0 0 1 0-.57l.765-.248a1.58 1.58 0 0 0 .984-.999l.249-.764a.302.302 0 0 1 .57 0l.249.764a1.58 1.58 0 0 0 .999.999"])')
 
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / bing] Got AI result]')
 
-            this.recordedOverview = true
             const content = $(item).get(0).innerHTML
 
             const payload = {
@@ -230,8 +229,6 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
                   foreground: this.isPrimarySite,
                   engine: 'bing'
                 }
-
-            console.log(payload)
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -249,7 +246,7 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
               }
             })
           })
-        }, 15000)
+        }, 2500)
       }
     }
   }

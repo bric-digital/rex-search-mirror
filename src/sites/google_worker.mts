@@ -17,8 +17,6 @@ export class WebmunkGoogleSiteWorkerModule extends WebmunkSearchSiteWorkerModule
         const query = searchUrl.searchParams.get('q')
 
         if (query !== null && query !== '') {
-          // console.log(details)
-
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
@@ -33,8 +31,6 @@ export class WebmunkGoogleSiteWorkerModule extends WebmunkSearchSiteWorkerModule
                 data = data.substring(4)
 
                 const dataJson = JSON.parse(data)
-
-                // console.log(dataJson)
 
                 const dataPayload = []
 
@@ -54,14 +50,8 @@ export class WebmunkGoogleSiteWorkerModule extends WebmunkSearchSiteWorkerModule
                   })
                 })
 
-                // console.log('[Search Mirror / google] Data Payload (Parsed):')
-                // console.log(dataPayload)
-
                 payload['suggestions'] = dataPayload
               } else {
-                // console.log('[Search Mirror / google] Data Payload (Raw):')
-                // console.log(data)
-
                 payload['raw_suggestions'] = data
               }
 

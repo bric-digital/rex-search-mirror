@@ -38,8 +38,6 @@ class SearchMirrorModule extends WebmunkClientModule {
   }
 
   setup() {
-    console.log(`Setting up SearchMirrorModule...`)
-
     chrome.runtime.sendMessage({'messageType': 'fetchConfiguration'})
       .then((response:{ [name: string]: any; }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const configuration = response as WebmunkConfiguration
@@ -61,8 +59,6 @@ class SearchMirrorModule extends WebmunkClientModule {
 
         this.mutationObserver.observe(document, {subtree: true, childList: true});
 
-        console.log(`this.configuration: ${this.configuration}`)
-
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame
             let matchedSearchSiteKey = null
@@ -73,14 +69,9 @@ class SearchMirrorModule extends WebmunkClientModule {
               }
             }
 
-            console.log(`matchedSearchSiteKey[1]: ${matchedSearchSiteKey}`)
-            console.log(`this.configuration['primary_sites']: ${this.configuration['primary_sites']}`)
-
             if (this.configuration['primary_sites'] !== undefined && this.configuration['primary_sites'].includes(matchedSearchSiteKey) === false) {
               matchedSearchSiteKey = null
             }
-
-            console.log(`matchedSearchSiteKey[2]: ${matchedSearchSiteKey}`)
 
             if (matchedSearchSiteKey !== null) {
               console.log('[Search Mirror] ' + window.location.href + ' is a search site (primary).')
@@ -105,13 +96,11 @@ class SearchMirrorModule extends WebmunkClientModule {
 
               thisSearchSite.isPrimarySite = true
 
-              console.log(`[Search Mirror] thisSearchSite: ${thisSearchSite}`)
-
               this.registerPageChangeListener(() => {
                 thisSearchSite.extractResults(this.configuration)
               })
             } else {
-              // console.log('[Search Mirror] ' + window.location.href + ' is not a search site. (primary)')
+
             }
           } else {
             let matchedSearchSiteKey = null
@@ -137,7 +126,7 @@ class SearchMirrorModule extends WebmunkClientModule {
                 thisSearchSite.extractResults(this.configuration)
               })
             } else {
-              // console.log('[Search Mirror] ' + window.location.href + ' is not a search site (secondary).')
+
             }
           }
         }

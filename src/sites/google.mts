@@ -9,8 +9,6 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
   recordedOverview = false
 
   matchesSearchSite(location):boolean {
-    console.log(`google matchesSearchSite: ${location}`)
-
     if (['google.com', 'www.google.com'].includes(location.host) === false) {
       return false
     }
@@ -20,8 +18,6 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
     }
 
     const searchQuery = this.extractQuery(location)
-
-    console.log(`google searchQuery: ${searchQuery}`)
 
     if (searchQuery === null || searchQuery === undefined || searchQuery === '') {
       return false
@@ -73,13 +69,8 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
   }
 
   extractResults(configuration) {
-    console.log('google extractResults')
-    console.log(this)
-    console.log(window.location)
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
-
-    console.log(`google query: ${query} -- queryType: ${queryType}`)
 
     if (queryType === 'image') {
       const results = document.querySelectorAll('div[data-ved][data-ow][data-oh]')
@@ -183,8 +174,6 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
               })
             })
 
-            console.log(`google title: ${title}`)
-
             let citation = ''
 
             cites.forEach(function (citeElement) {
@@ -214,11 +203,11 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
               query,
               type: queryType,
               foreground: this.isPrimarySite,
-              engine: 'google'
+              engine: 'google',
+              index: this.resultCount
             }
 
             console.log('[Search Mirror / google] Got result[' + this.resultCount + ']: ' + title)
-            // console.log(payload)
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -238,13 +227,14 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
       if (this.recordedOverview === false) {
         // AI Overview
 
+        this.recordedOverview = true
+
         window.setTimeout(() => {
           const aiSvgPath = $('path[d="M235.5 471C235.5 438.423 229.22 407.807 216.66 379.155C204.492 350.503 187.811 325.579 166.616 304.384C145.421 283.189 120.498 266.508 91.845 254.34C63.1925 241.78 32.5775 235.5 0 235.5C32.5775 235.5 63.1925 229.416 91.845 217.249C120.498 204.689 145.421 187.811 166.616 166.616C187.811 145.421 204.492 120.497 216.66 91.845C229.22 63.1925 235.5 32.5775 235.5 0C235.5 32.5775 241.584 63.1925 253.751 91.845C266.311 120.497 283.189 145.421 304.384 166.616C325.579 187.811 350.503 204.689 379.155 217.249C407.807 229.416 438.423 235.5 471 235.5C438.423 235.5 407.807 241.78 379.155 254.34C350.503 266.508 325.579 283.189 304.384 304.384C283.189 325.579 266.311 350.503 253.751 379.155C241.584 407.807 235.5 438.423 235.5 471Z"]')
 
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / google] Got AI result]')
 
-            this.recordedOverview = true
             const overview = $(item).parent().parent().parent().parent().parent()
 
             const content = overview.get(0).innerHTML
@@ -256,10 +246,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
                   type: queryType,
                   foreground: this.isPrimarySite,
                   engine: 'google',
-                  index: this.resultCount
                 }
-
-            console.log(payload)
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -277,7 +264,7 @@ export class WebmunkGoogleSiteBrowserModule extends WebmunkSearchSiteBrowserModu
               }
             })
           })
-        }, 15000)
+        }, 2500)
       }
     }
   }

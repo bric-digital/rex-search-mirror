@@ -137,7 +137,6 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
             }
 
             console.log('[Search Mirror / duckduckgo] Got result[' + this.resultCount + ']: ' + title)
-            // console.log(payload)
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -157,13 +156,14 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
       if (this.recordedOverview === false) {
         // AI Overview
 
+        this.recordedOverview = true
+
         window.setTimeout(() => {
           const aiSvgPath = $('li:has(path[d="M3.375 6a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25zM8.5 9.375c0 .345-.28.625-.625.625H.625a.625.625 0 1 1 0-1.25h7.25c.345 0 .625.28.625.625M10.375 14a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25z"])')
 
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / duckduckgo] Got AI result]')
 
-            this.recordedOverview = true
             const content = $(item).get(0).innerHTML
 
             const payload = {
@@ -174,8 +174,6 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
                   foreground: this.isPrimarySite,
                   engine: 'duckduckgo'
                 }
-
-            console.log(payload)
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -193,7 +191,7 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
               }
             })
           })
-        }, 15000)
+        }, 2500)
       }
     }
   }
