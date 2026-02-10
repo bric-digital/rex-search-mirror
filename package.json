@@ -52,7 +52,7 @@
         "typescript-eslint": "^8.46.3"
     },
     "dependencies": {
-        "@bric/webmunk-core": "github:bric-digital/webmunk-core",
+        "@bric/rex-core": "github:bric-digital/rex-core",
         "jquery": "^3.7.1"
     }
 }

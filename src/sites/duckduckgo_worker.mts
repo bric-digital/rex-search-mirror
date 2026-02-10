@@ -1,4 +1,4 @@
-import { dispatchEvent } from '@bric/webmunk-core/service-worker'
+import { dispatchEvent } from '@bric/rex-core/service-worker'
 
 import { WebmunkSearchSiteWorkerModule } from '../service-worker.mjs'
 

@@ -1,5 +1,5 @@
-import { WebmunkClientModule, registerWebmunkModule } from '@bric/webmunk-core/browser'
-import { WebmunkConfiguration } from '@bric/webmunk-core/extension'
+import { REXClientModule, registerREXModule } from '@bric/rex-core/browser'
+import { REXConfiguration } from '@bric/rex-core/extension'
 
 export class WebmunkSearchSiteBrowserModule {
   matchesSearchSite(url):boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -11,7 +11,7 @@ export class WebmunkSearchSiteBrowserModule {
   }
 }
 
-class SearchMirrorModule extends WebmunkClientModule {
+class SearchMirrorModule extends REXClientModule {
   searchMirrorSites = {}
   pageChangeListeners = []
   mutationObserver:MutationObserver = null
@@ -40,7 +40,7 @@ class SearchMirrorModule extends WebmunkClientModule {
   setup() {
     chrome.runtime.sendMessage({'messageType': 'fetchConfiguration'})
       .then((response:{ [name: string]: any; }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const configuration = response as WebmunkConfiguration
+        const configuration = response as REXConfiguration
 
         this.configuration = configuration['search_mirror']
 
@@ -154,6 +154,6 @@ class SearchMirrorModule extends WebmunkClientModule {
 
 const plugin = new SearchMirrorModule()
 
-registerWebmunkModule(plugin)
+registerREXModule(plugin)
 
 export default plugin

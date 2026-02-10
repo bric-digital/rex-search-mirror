@@ -1,5 +1,5 @@
-import { WebmunkConfiguration } from '@bric/webmunk-core/extension'
-import webmunkCorePlugin, { WebmunkServiceWorkerModule } from '@bric/webmunk-core/service-worker'
+import { REXConfiguration } from '@bric/rex-core/extension'
+import rexCorePlugin, { REXServiceWorkerModule } from '@bric/rex-core/service-worker'
 
 const stringToId = function (str:string) {
   let id:number = str.length
@@ -21,7 +21,7 @@ export class WebmunkSearchSiteWorkerModule {
   }
 }
 
-class WebmunkSearchMirrorModule extends WebmunkServiceWorkerModule {
+class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
   configuration = {}
 
   configurationDetails():any {
@@ -58,8 +58,8 @@ class WebmunkSearchMirrorModule extends WebmunkServiceWorkerModule {
   }
 
   setup() {
-    webmunkCorePlugin.fetchConfiguration()
-      .then((configuration:WebmunkConfiguration) => {
+    .fetchConfiguration()
+      .then((configuration:REXConfiguration) => {
         this.configuration = configuration['search_mirror']
 
         if (this.configuration === null || this.configuration === undefined) {
