@@ -58,7 +58,7 @@ class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
   }
 
   setup() {
-    .fetchConfiguration()
+    rexCorePlugin.fetchConfiguration()
       .then((configuration:REXConfiguration) => {
         this.configuration = configuration['search_mirror']
 
