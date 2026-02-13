@@ -54,7 +54,6 @@
     "dependencies": {
         "@bric/rex-core": "github:bric-digital/rex-core",
         "install": "^0.13.0",
-        "jquery": "^3.7.1",
-        "npm": "^10.9.4"
+        "jquery": "^3.7.1"
     }
 }
