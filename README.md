@@ -1,1 +1,1 @@
-# webmunk-search-mirror
+# rex-search-mirror

@@ -1,8 +1,8 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { WebmunkSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
 
-export class WebmunkDDGSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
+export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
   setup() {
     chrome.webRequest.onCompleted.addListener(async function (details) {
       if (details.initiator === undefined || details.initiator.includes('chrome-extension://')) {
@@ -56,7 +56,7 @@ export class WebmunkDDGSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
   }
 }
 
-const ddgWorker = new WebmunkDDGSiteWorkerModule()
+const ddgWorker = new REXDDGSiteWorkerModule()
 ddgWorker.setup()
 
 export default ddgWorker

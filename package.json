@@ -1,21 +1,21 @@
 {
-    "name": "@bric/webmunk-search-mirror",
+    "name": "@bric/rex-search-mirror",
     "version": "0.0.1",
-    "description": "Webmunk module mirrors results from search engines.",
+    "description": "REX module mirrors results from search engines.",
     "keywords": [
         "extension",
-        "webmunk"
+        "rex"
     ],
     "author": "Behavioral Research Innovation Center",
     "type": "module",
     "main": "index.mts",
-    "homepage": "https://github.com/bric-digital/webmunk-search-mirror",
+    "homepage": "https://github.com/bric-digital/rex-search-mirror",
     "bugs": {
-        "url": "https://github.com/bric-digital/webmunk-search-mirror/issues"
+        "url": "https://github.com/bric-digital/rex-search-mirror/issues"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/bric-digital/webmunk-search-mirror.git"
+        "url": "git+https://github.com/bric-digital/rex-search-mirror.git"
     },
     "exports": {
         "./extension": "./src/extension.mts",
@@ -53,6 +53,8 @@
     },
     "dependencies": {
         "@bric/rex-core": "github:bric-digital/rex-core",
-        "jquery": "^3.7.1"
+        "install": "^0.13.0",
+        "jquery": "^3.7.1",
+        "npm": "^10.9.4"
     }
 }

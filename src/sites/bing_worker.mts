@@ -1,8 +1,8 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { WebmunkSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
 
-export class WebmunkBingSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
+export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
   parseListItem(itemString) {
     if (itemString.includes('pp_title')) {
       const ppIndex = itemString.indexOf('pp_title')
@@ -112,7 +112,7 @@ export class WebmunkBingSiteWorkerModule extends WebmunkSearchSiteWorkerModule {
   }
 }
 
-const bingWorker = new WebmunkBingSiteWorkerModule()
+const bingWorker = new REXBingSiteWorkerModule()
 bingWorker.setup()
 
 export default bingWorker

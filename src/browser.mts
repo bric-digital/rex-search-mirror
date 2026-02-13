@@ -1,7 +1,7 @@
-import { REXClientModule, registerREXModule } from '@bric/rex-core/browser'
+import { REXClientModule, registerREXModule, injectREXSelectors } from '@bric/rex-core/browser'
 import { REXConfiguration } from '@bric/rex-core/extension'
 
-export class WebmunkSearchSiteBrowserModule {
+export class REXSearchSiteBrowserModule {
   matchesSearchSite(url):boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
     return false
   }
@@ -38,6 +38,8 @@ class SearchMirrorModule extends REXClientModule {
   }
 
   setup() {
+    injectREXSelectors()
+
     chrome.runtime.sendMessage({'messageType': 'fetchConfiguration'})
       .then((response:{ [name: string]: any; }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const configuration = response as REXConfiguration
@@ -64,7 +66,7 @@ class SearchMirrorModule extends REXClientModule {
             let matchedSearchSiteKey = null
 
             for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
-              if ((siteObject as WebmunkSearchSiteBrowserModule).matchesSearchSite(window.location)) {
+              if ((siteObject as REXSearchSiteBrowserModule).matchesSearchSite(window.location)) {
                 matchedSearchSiteKey = siteKey
               }
             }
@@ -84,7 +86,7 @@ class SearchMirrorModule extends REXClientModule {
               for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
                 if (siteKey !== matchedSearchSiteKey) {
                   const existingFrame = document.getElementById('background_fetch_frame_' + siteKey)
-                  const searchLocation = (siteObject as WebmunkSearchSiteBrowserModule).searchUrl(query, queryType)
+                  const searchLocation = (siteObject as REXSearchSiteBrowserModule).searchUrl(query, queryType)
 
                   if (this.configuration['secondary-sites'] !== undefined && this.configuration['secondary-sites'].includes(siteKey) === false) {
                     // Skip -- not enabled
@@ -99,14 +101,12 @@ class SearchMirrorModule extends REXClientModule {
               this.registerPageChangeListener(() => {
                 thisSearchSite.extractResults(this.configuration)
               })
-            } else {
-
             }
           } else {
             let matchedSearchSiteKey = null
 
             for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
-              if ((siteObject as WebmunkSearchSiteBrowserModule).matchesSearchSite(window.location)) {
+              if ((siteObject as REXSearchSiteBrowserModule).matchesSearchSite(window.location)) {
                 matchedSearchSiteKey = siteKey
               }
             }
@@ -125,8 +125,6 @@ class SearchMirrorModule extends REXClientModule {
               this.registerPageChangeListener(() => {
                 thisSearchSite.extractResults(this.configuration)
               })
-            } else {
-
             }
           }
         }

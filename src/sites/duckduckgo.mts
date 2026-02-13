@@ -1,10 +1,11 @@
-import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
+import mirrorManager, { REXSearchSiteBrowserModule } from '../browser.mjs'
 
-export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
+export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
   linkCache = {}
   isPrimarySite = true
   resultCount = 0
   recordedOverview = false
+  recordedNews = false
 
   matchesSearchSite(location):boolean {
     if (['duckduckgo.com'].includes(location.host) === false) {
@@ -194,10 +195,54 @@ export class WebmunkDDGSiteBrowserModule extends WebmunkSearchSiteBrowserModule 
         }, 2500)
       }
     }
+
+    if (configuration['include_news_elements']) {
+      if (this.recordedNews === false) {
+        // News Overview
+
+        window.setTimeout(() => {
+          const newsPath = $('div[data-react-module-id="news"] li')
+
+
+          newsPath.each((index, item) => {
+            console.log('[Search Mirror / bing] Got News result]')
+
+            const blurb = $(item)
+
+            const content = blurb.get(0).outerHTML
+
+            const payload = {
+                  search_url: window.location.href,
+                  content,
+                  query,
+                  type: queryType,
+                  foreground: this.isPrimarySite,
+                  engine: 'duckduckgo',
+                }
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result-news',
+                payload
+              }
+            })
+
+            chrome.runtime.sendMessage({
+              'messageType': 'logEvent',
+              'event': {
+                'name': 'search-mirror-result',
+                payload
+              }
+            })
+          })
+        }, 2500)
+      }
+    }
   }
 }
 
-const ddgSite = new WebmunkDDGSiteBrowserModule()
+const ddgSite = new REXDDGSiteBrowserModule()
 
 mirrorManager.registerSearchMirrorSite('duckduckgo', ddgSite)
 

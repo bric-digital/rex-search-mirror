@@ -24,13 +24,14 @@ export class WebmunkSearchSiteWorkerModule {
 class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
   configuration = {}
 
-  configurationDetails():any {
+  configurationDetails():any { // eslint-disable-line @typescript-eslint/no-explicit-any
     return {
       search_mirror: {
         enabled: 'Boolean, true if module is active, false otherwise.',
         primary_sites: 'Array of strings indicating which sites to collect search results from directly. Valid array items: "google", "bing", "duckduckgo".',
         secondary_sites: 'Array of strings indicating which sites to collect mirrored search results from. These queries are invisible to the user. Leave empty to disable this feature. Valid array items: "google", "bing", "duckduckgo".',
-        include_ai_elements: 'Boolean, true if module should capture AI overviews and similar elements, false to disable AI element capture.'
+        include_ai_elements: 'Boolean, true if module should capture AI overviews and similar elements, false to disable AI element capture.',
+        include_news_elements: 'Boolean, true if module should capture news blurbs and similar elements, false to disable news element capture.'
       }
     }
   }
@@ -58,7 +59,7 @@ class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
   }
 
   setup() {
-    .fetchConfiguration()
+    rexCorePlugin.fetchConfiguration()
       .then((configuration:REXConfiguration) => {
         this.configuration = configuration['search_mirror']
 

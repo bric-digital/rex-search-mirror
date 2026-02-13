@@ -1,10 +1,11 @@
-import mirrorManager, { WebmunkSearchSiteBrowserModule } from '../browser.mjs'
+import mirrorManager, { REXSearchSiteBrowserModule } from '../browser.mjs'
 
-export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule {
+export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
   linkCache = {}
   isPrimarySite = true
   resultCount = 0
   recordedOverview = false
+  recordedNews = false
 
   matchesSearchSite(location):boolean {
     if (['bing.com', 'www.bing.com'].includes(location.host) === false) {
@@ -249,10 +250,62 @@ export class WebmunkBingSiteBrowserModule extends WebmunkSearchSiteBrowserModule
         }, 2500)
       }
     }
+
+    if (configuration['include_news_elements']) {
+      if (this.recordedNews === false) {
+        // News Overview
+
+        this.recordedNews = true
+
+        const selectors = [
+          '.nslist_card_main',
+          '.na_citem'
+        ]
+
+        for (const selector of selectors) {
+          window.setTimeout(() => {
+            const aiSvgPath = $(selector)
+
+            aiSvgPath.each((index, item) => {
+              console.log('[Search Mirror / bing] Got News result]')
+
+              const blurb = $(item)
+
+              const content = blurb.get(0).outerHTML
+
+              const payload = {
+                    search_url: window.location.href,
+                    content,
+                    query,
+                    type: queryType,
+                    foreground: this.isPrimarySite,
+                    engine: 'bing',
+                  }
+
+              chrome.runtime.sendMessage({
+                'messageType': 'logEvent',
+                'event': {
+                  'name': 'search-mirror-result-news',
+                  payload
+                }
+              })
+
+              chrome.runtime.sendMessage({
+                'messageType': 'logEvent',
+                'event': {
+                  'name': 'search-mirror-result',
+                  payload
+                }
+              })
+            })
+          }, 2500)
+        }
+      }
+    }
   }
 }
 
-const bingSite = new WebmunkBingSiteBrowserModule()
+const bingSite = new REXBingSiteBrowserModule()
 
 mirrorManager.registerSearchMirrorSite('bing', bingSite)
 
