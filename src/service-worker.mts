@@ -15,13 +15,13 @@ const stringToId = function (str:string) {
   return id % 5000
 }
 
-export class WebmunkSearchSiteWorkerModule {
+export class REXSearchSiteWorkerModule {
   setup() {
     // Implement in subclasses to capture search suggestions and other background traffic
   }
 }
 
-class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
+class REXSearchMirrorModule extends REXServiceWorkerModule {
   configuration = {}
 
   configurationDetails():any { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -109,6 +109,6 @@ class WebmunkSearchMirrorModule extends REXServiceWorkerModule {
   }
 }
 
-const plugin = new WebmunkSearchMirrorModule()
+const plugin = new REXSearchMirrorModule()
 
 export default plugin
