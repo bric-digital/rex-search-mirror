@@ -61,50 +61,54 @@ class REXSearchMirrorModule extends REXServiceWorkerModule {
   setup() {
     rexCorePlugin.fetchConfiguration()
       .then((configuration:REXConfiguration) => {
-        this.configuration = configuration['search_mirror']
+        if (configuration !== null && configuration !== undefined) {
+          this.configuration = configuration['search_mirror']
 
-        if (this.configuration === null || this.configuration === undefined) {
-          this.configuration = {}
-        }
-
-        let urlFilters = [
-          '||bing.com/',
-          '||www.bing.com/',
-          '||google.com/',
-          '||www.google.com/',
-          '||duckduckgo.com/'
-        ]
-
-        if (this.configuration['url-filters'] !== undefined) {
-          urlFilters = this.configuration['url-filters']
-        }
-
-        for (const urlFilter of urlFilters) {
-          const stripRule = {
-            id: stringToId('search-mirror-' + urlFilter),
-            priority: 1,
-            action: {
-              type: 'modifyHeaders' as const,
-              responseHeaders: [
-                { header: 'x-frame-options', operation: 'remove' as const},
-                { header: 'content-security-policy', operation: 'remove' as const }
-              ]
-            },
-            condition: { urlFilter, resourceTypes: ['main_frame' as const, 'sub_frame' as const] }
+          if (this.configuration === null || this.configuration === undefined) {
+            this.configuration = {}
           }
 
-          chrome.declarativeNetRequest.updateSessionRules({
-            addRules: [stripRule]
-          }, () => {
-            if (chrome.runtime['lastError']) {
-              console.log('[Search Mirror] ' + chrome.runtime['lastError'].message)
+          let urlFilters = [
+            '||bing.com/',
+            '||www.bing.com/',
+            '||google.com/',
+            '||www.google.com/',
+            '||duckduckgo.com/'
+          ]
+
+          if (this.configuration['url-filters'] !== undefined) {
+            urlFilters = this.configuration['url-filters']
+          }
+
+          for (const urlFilter of urlFilters) {
+            const stripRule = {
+              id: stringToId('search-mirror-' + urlFilter),
+              priority: 1,
+              action: {
+                type: 'modifyHeaders' as const,
+                responseHeaders: [
+                  { header: 'x-frame-options', operation: 'remove' as const},
+                  { header: 'content-security-policy', operation: 'remove' as const }
+                ]
+              },
+              condition: { urlFilter, resourceTypes: ['main_frame' as const, 'sub_frame' as const] }
             }
-          })
 
-          console.log('[Search Mirror] Added URL filter: ' + urlFilter)
+            chrome.declarativeNetRequest.updateSessionRules({
+              addRules: [stripRule]
+            }, () => {
+              if (chrome.runtime['lastError']) {
+                console.log('[Search Mirror] ' + chrome.runtime['lastError'].message)
+              }
+            })
+
+            console.log('[Search Mirror] Added URL filter: ' + urlFilter)
+          }
+
+          console.log('[Search Mirror] Initialized.')
+        } else {
+          self.setTimeout(this.setup, 1000)
         }
-
-        console.log('[Search Mirror] Initialized.')
       })
   }
 }
