@@ -20,7 +20,14 @@ export class REXGoogleSiteWorkerModule extends REXSearchSiteWorkerModule {
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
-              const payload = {
+              const payload: {
+                engine: string
+                query: string
+                initiator: string | undefined
+                search_url: string
+                suggestions?: Array<{ term: unknown; subtitle: string; data: unknown }>
+                raw_suggestions?: string
+              } = {
                 engine: 'google',
                 query,
                 initiator: details.initiator,
@@ -32,15 +39,15 @@ export class REXGoogleSiteWorkerModule extends REXSearchSiteWorkerModule {
 
                 const dataJson = JSON.parse(data)
 
-                const dataPayload = []
+                const dataPayload: Array<{ term: unknown; subtitle: string; data: unknown }> = []
 
                 const suggestions = dataJson[0]
 
-                suggestions.forEach(function (suggestion) {
+                suggestions.forEach(function (suggestion: unknown[]) {
                   let subtitle = ''
 
                   if (suggestion.length > 3) {
-                    subtitle = suggestion[3].zi
+                    subtitle = (suggestion[3] as { zi?: string }).zi ?? ''
                   }
 
                   dataPayload.push({

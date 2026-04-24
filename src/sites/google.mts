@@ -1,15 +1,19 @@
 import $ from 'jquery'
 
-import mirrorManager, { REXSearchSiteBrowserModule } from '../browser.mjs'
+import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
-  linkCache = {}
-  isPrimarySite = true
+  linkCache: Record<string, unknown> = {}
   resultCount = 0
   recordedOverview = false
   recordedNews = false
 
-  matchesSearchSite(location):boolean {
+  constructor() {
+    super()
+    this.isPrimarySite = true
+  }
+
+  matchesSearchSite(location: Location): boolean {
     if (['google.com', 'www.google.com'].includes(location.host) === false) {
       return false
     }
@@ -27,7 +31,11 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
     return true
   }
 
-  searchUrl(query, queryType):string|null {
+  searchUrl(query: string | null, queryType: string | null): string | null {
+    if (query === null) {
+      return null
+    }
+
     if (queryType === 'image') {
       return 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(query)
     }
@@ -43,13 +51,13 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'https://www.google.com/search?q=' + encodeURIComponent(query)
   }
 
-  extractQuery(location) {
+  extractQuery(location: Location): string | null {
     const params = new URLSearchParams(location.search)
 
     return params.get('q')
   }
 
-  extractQueryType(location) {
+  extractQueryType(location: Location): string | null {
     const params = new URLSearchParams(location.search)
 
     const tbm = params.get('tbm')
@@ -69,7 +77,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'web'
   }
 
-  extractResults(configuration) {
+  extractResults(configuration: REXSearchMirrorConfiguration) {
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
 
@@ -82,10 +90,14 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
         if (titles.length > 0) {
           const hrefs = element.querySelectorAll('a[target="_blank"]')
 
-          let href = null
+          let href: string | null = null
 
           hrefs.forEach(function (hrefElement) {
             const url = hrefElement.getAttribute('href')
+
+            if (url === null) {
+              return
+            }
 
             const lowerUrl = url.toLowerCase()
 
@@ -164,7 +176,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
         if (titles.length > 0 && cites.length > 0) {
           const href = element.getAttribute('href')
 
-          if (this.linkCache[href] === undefined) {
+          if (href !== null && this.linkCache[href] === undefined) {
             let title = ''
 
             titles.forEach(function (titleElement) {
@@ -191,7 +203,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
               })
             })
 
-            const content = (element.parentNode.parentNode.parentNode as Element).outerHTML
+            const content = (element.parentNode?.parentNode?.parentNode as Element | null | undefined)?.outerHTML ?? ''
 
             this.resultCount += 1
 
@@ -238,7 +250,11 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
 
             const overview = $(item).parent().parent().parent().parent().parent()
 
-            const content = overview.get(0).innerHTML
+            const overviewEl = overview.get(0)
+            if (overviewEl === undefined) {
+              return
+            }
+            const content = overviewEl.innerHTML
 
             const payload = {
                   search_url: window.location.href,
@@ -283,7 +299,11 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
 
             const blurb = $(item)
 
-            const content = blurb.get(0).outerHTML
+            const blurbEl = blurb.get(0)
+            if (blurbEl === undefined) {
+              return
+            }
+            const content = blurbEl.outerHTML
 
             const payload = {
                   search_url: window.location.href,

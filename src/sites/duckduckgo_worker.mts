@@ -22,7 +22,13 @@ export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
-              const payload = {
+              const payload: {
+                engine: string
+                query: string
+                initiator: string | undefined
+                search_url: string
+                suggestions?: Array<{ term: unknown; subtitle: string; data: unknown }>
+              } = {
                 engine: 'duckduckgo',
                 query,
                 initiator: details.initiator,
@@ -31,9 +37,9 @@ export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
 
               const dataJson = JSON.parse(data)
 
-              const dataPayload = []
+              const dataPayload: Array<{ term: unknown; subtitle: string; data: unknown }> = []
 
-              dataJson.forEach(function (suggestion) {
+              dataJson.forEach(function (suggestion: { phrase?: unknown }) {
                 dataPayload.push({
                   term: suggestion.phrase,
                   subtitle: '',

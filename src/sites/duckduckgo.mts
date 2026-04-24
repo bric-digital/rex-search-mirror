@@ -1,13 +1,19 @@
-import mirrorManager, { REXSearchSiteBrowserModule } from '../browser.mjs'
+import $ from 'jquery'
+
+import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
-  linkCache = {}
-  isPrimarySite = true
+  linkCache: Record<string, unknown> = {}
   resultCount = 0
   recordedOverview = false
   recordedNews = false
 
-  matchesSearchSite(location):boolean {
+  constructor() {
+    super()
+    this.isPrimarySite = true
+  }
+
+  matchesSearchSite(location: Location): boolean {
     if (['duckduckgo.com'].includes(location.host) === false) {
       return false
     }
@@ -25,7 +31,11 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
     return true
   }
 
-  searchUrl(query, queryType):string|null {
+  searchUrl(query: string | null, queryType: string | null): string | null {
+    if (query === null) {
+      return null
+    }
+
     if (queryType === 'image') {
       return 'https://duckduckgo.com/?iax=images&ia=images&q=' + encodeURIComponent(query)
     }
@@ -41,13 +51,13 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'https://duckduckgo.com/?ia=web&q=' + encodeURIComponent(query)
   }
 
-  extractQuery(location) {
+  extractQuery(location: Location): string | null {
     const params = new URLSearchParams(location.search)
 
     return params.get('q')
   }
 
-  extractQueryType(location) {
+  extractQueryType(location: Location): string {
     const params = new URLSearchParams(location.search)
 
     const ia = params.get('ia')
@@ -67,21 +77,21 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'web'
   }
 
-  extractResults(configuration) {
+  extractResults(configuration: REXSearchMirrorConfiguration) {
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
 
     if (queryType === 'web') {
       const results = document.querySelectorAll('article[data-nrn="result"]')
 
-      results.forEach(function (element) {
+      results.forEach((element) => {
         const cites = element.querySelectorAll('[data-testid="result-extras-url-link"]')
 
         const titles = element.querySelectorAll('h2')
 
         if (titles.length > 0 && cites.length > 0) {
           let title = ''
-          let href = null
+          let href: string | null = null
 
           titles.forEach(function (titleElement) {
             titleElement.childNodes.forEach(function (childNode) {
@@ -165,7 +175,11 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / duckduckgo] Got AI result]')
 
-            const content = $(item).get(0).innerHTML
+            const aiEl = $(item).get(0)
+            if (aiEl === undefined) {
+              return
+            }
+            const content = aiEl.innerHTML
 
             const payload = {
                   search_url: window.location.href,
@@ -209,7 +223,11 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
 
             const blurb = $(item)
 
-            const content = blurb.get(0).outerHTML
+            const blurbEl = blurb.get(0)
+            if (blurbEl === undefined) {
+              return
+            }
+            const content = blurbEl.outerHTML
 
             const payload = {
                   search_url: window.location.href,
