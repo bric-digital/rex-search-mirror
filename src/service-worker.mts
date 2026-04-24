@@ -20,6 +20,21 @@ const stringToId = function (str:string) {
   return id % 5000
 }
 
+export interface SearchSuggestionItem {
+  term: unknown
+  subtitle?: string
+  data?: unknown
+}
+
+export interface SearchSuggestionsPayload {
+  engine: string
+  query: string
+  initiator: string | undefined
+  search_url: string
+  suggestions?: SearchSuggestionItem[]
+  raw_suggestions?: string
+}
+
 export class REXSearchSiteWorkerModule {
   setup() {
     // Implement in subclasses to capture search suggestions and other background traffic

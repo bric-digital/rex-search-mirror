@@ -1,6 +1,6 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule, SearchSuggestionItem, SearchSuggestionsPayload } from '../service-worker.mjs'
 
 export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
   parseListItem(itemString: string): string[] | null {
@@ -71,14 +71,7 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
           fetch(details.url)
             .then(response => response.text())
             .then((data) => {
-              const payload: {
-                engine: string
-                query: string
-                initiator: string | undefined
-                search_url: string
-                suggestions?: Array<{ term: string | undefined; subtitle?: string }>
-                raw_suggestions?: string
-              } = {
+              const payload: SearchSuggestionsPayload = {
                 engine: 'bing',
                 query,
                 initiator: details.initiator,
@@ -87,7 +80,7 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
 
               const matches = this.parseMatches(data)
 
-              const dataPayload: Array<{ term: string | undefined; subtitle?: string }> = []
+              const dataPayload: SearchSuggestionItem[] = []
 
               for (const match of matches) {
                 if (match.length > 1) {
