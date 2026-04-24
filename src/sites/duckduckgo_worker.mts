@@ -1,6 +1,6 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule, SearchSuggestionItem, SearchSuggestionsPayload } from '../service-worker.mjs'
 
 export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
   setup() {
@@ -22,7 +22,7 @@ export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
-              const payload = {
+              const payload: SearchSuggestionsPayload = {
                 engine: 'duckduckgo',
                 query,
                 initiator: details.initiator,
@@ -31,9 +31,9 @@ export class REXDDGSiteWorkerModule extends REXSearchSiteWorkerModule {
 
               const dataJson = JSON.parse(data)
 
-              const dataPayload = []
+              const dataPayload: SearchSuggestionItem[] = []
 
-              dataJson.forEach(function (suggestion) {
+              dataJson.forEach(function (suggestion: { phrase?: unknown }) {
                 dataPayload.push({
                   term: suggestion.phrase,
                   subtitle: '',

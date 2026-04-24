@@ -1,13 +1,19 @@
-import mirrorManager, { REXSearchSiteBrowserModule } from '../browser.mjs'
+import $ from 'jquery'
+
+import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
-  linkCache = {}
-  isPrimarySite = true
+  linkCache: Record<string, unknown> = {}
   resultCount = 0
   recordedOverview = false
   recordedNews = false
 
-  matchesSearchSite(location):boolean {
+  constructor() {
+    super()
+    this.isPrimarySite = true
+  }
+
+  matchesSearchSite(location: Location): boolean {
     if (['bing.com', 'www.bing.com'].includes(location.host) === false) {
       return false
     }
@@ -21,7 +27,11 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
     return true
   }
 
-  searchUrl(query, queryType):string|null {
+  searchUrl(query: string | null, queryType: string | null): string | null {
+    if (query === null) {
+      return null
+    }
+
     if (queryType === 'image') {
       return 'https://www.bing.com/images/search?q=' + encodeURIComponent(query)
     }
@@ -37,13 +47,13 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'https://www.bing.com/search?q=' + encodeURIComponent(query)
   }
 
-  extractQuery(location) {
+  extractQuery(location: Location): string | null {
     const params = new URLSearchParams(location.search)
 
     return params.get('q')
   }
 
-  extractQueryType(location) {
+  extractQueryType(location: Location): string {
     if (location.pathname.startsWith('/images/search')) {
       return 'image'
     }
@@ -59,20 +69,20 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
     return 'web'
   }
 
-  extractResults(configuration) {
+  extractResults(configuration: REXSearchMirrorConfiguration) {
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
 
     if (queryType === 'web') {
       const results = document.querySelectorAll('li.b_algo')
 
-      results.forEach(function (element) {
+      results.forEach((element) => {
         const cites = element.querySelectorAll('cite')
         const titles = element.querySelectorAll('h2')
 
         if (titles.length > 0 && cites.length > 0) {
           let title = ''
-          let href = null
+          let href: string | null = null
 
           titles.forEach(function (titleElement) {
             titleElement.childNodes.forEach(function (childNode) {
@@ -135,12 +145,12 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
 
       const results = document.querySelectorAll('div.iuscp')
 
-      results.forEach(function (element) {
+      results.forEach((element) => {
         const titles = element.querySelectorAll('a[title]')
 
         if (titles.length > 0) {
           let title = ''
-          let href = null
+          let href: string | null = null
 
           titles.forEach(function (titleElement) {
             title += titleElement.getAttribute('title')
@@ -149,14 +159,19 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
           const hrefs = element.querySelectorAll('a.iusc')
 
           hrefs.forEach(function (hrefElement) {
-            const metadata = JSON.parse(hrefElement.getAttribute('m'))
+            const metadataRaw = hrefElement.getAttribute('m')
+            if (metadataRaw === null) {
+              return
+            }
+
+            const metadata = JSON.parse(metadataRaw)
 
             if (metadata !== null) {
               href = metadata.purl
             }
           })
 
-          let imageHref = null
+          let imageHref: string | null = null
 
           const imageElements = element.querySelectorAll('img[alt]')
 
@@ -220,7 +235,11 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / bing] Got AI result]')
 
-            const content = $(item).get(0).innerHTML
+            const aiEl = $(item).get(0)
+            if (aiEl === undefined) {
+              return
+            }
+            const content = aiEl.innerHTML
 
             const payload = {
                   search_url: window.location.href,
@@ -271,7 +290,11 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
 
               const blurb = $(item)
 
-              const content = blurb.get(0).outerHTML
+              const blurbEl = blurb.get(0)
+              if (blurbEl === undefined) {
+                return
+              }
+              const content = blurbEl.outerHTML
 
               const payload = {
                     search_url: window.location.href,

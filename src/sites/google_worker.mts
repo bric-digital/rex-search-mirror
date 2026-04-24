@@ -1,6 +1,6 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule, SearchSuggestionItem, SearchSuggestionsPayload } from '../service-worker.mjs'
 
 export class REXGoogleSiteWorkerModule extends REXSearchSiteWorkerModule {
   setup() {
@@ -20,7 +20,7 @@ export class REXGoogleSiteWorkerModule extends REXSearchSiteWorkerModule {
           fetch(details.url)
             .then(response => response.text())
             .then(function (data) {
-              const payload = {
+              const payload: SearchSuggestionsPayload = {
                 engine: 'google',
                 query,
                 initiator: details.initiator,
@@ -32,15 +32,15 @@ export class REXGoogleSiteWorkerModule extends REXSearchSiteWorkerModule {
 
                 const dataJson = JSON.parse(data)
 
-                const dataPayload = []
+                const dataPayload: SearchSuggestionItem[] = []
 
                 const suggestions = dataJson[0]
 
-                suggestions.forEach(function (suggestion) {
+                suggestions.forEach(function (suggestion: unknown[]) {
                   let subtitle = ''
 
                   if (suggestion.length > 3) {
-                    subtitle = suggestion[3].zi
+                    subtitle = (suggestion[3] as { zi?: string }).zi ?? ''
                   }
 
                   dataPayload.push({

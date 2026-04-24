@@ -1,21 +1,45 @@
 import { REXClientModule, registerREXModule, injectREXSelectors } from '@bric/rex-core/browser'
-import { REXConfiguration } from '@bric/rex-core/extension'
+import { REXConfiguration } from '@bric/rex-core/common'
+
+export interface REXSearchMirrorConfiguration {
+  enabled: boolean
+  primary_sites?: string[]
+  secondary_sites?: string[]
+  'secondary-sites'?: string[]
+  [key: string]: unknown
+}
 
 export class REXSearchSiteBrowserModule {
-  matchesSearchSite(url):boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
+  isPrimarySite = false
+
+  matchesSearchSite(url: Location): boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
     return false
   }
 
-  searchUrl(query, queryType):string|null { // eslint-disable-line @typescript-eslint/no-unused-vars
+  searchUrl(query: string | null, queryType: string | null): string | null { // eslint-disable-line @typescript-eslint/no-unused-vars
     return null
+  }
+
+  extractQuery(location: Location): string | null { // eslint-disable-line @typescript-eslint/no-unused-vars
+    return null
+  }
+
+  extractQueryType(location: Location): string | null { // eslint-disable-line @typescript-eslint/no-unused-vars
+    return null
+  }
+
+  extractResults(configuration: REXSearchMirrorConfiguration): void { // eslint-disable-line @typescript-eslint/no-unused-vars
+    // Override in subclasses.
   }
 }
 
+type PageChangeListener = () => void
+
 class SearchMirrorModule extends REXClientModule {
-  searchMirrorSites = {}
-  pageChangeListeners = []
-  mutationObserver:MutationObserver = null
-  configuration = null
+  searchMirrorSites: Record<string, REXSearchSiteBrowserModule> = {}
+  pageChangeListeners: PageChangeListener[] = []
+  mutationObserver: MutationObserver | null = null
+  configuration: REXSearchMirrorConfiguration | null = null
 
   constructor() {
     super()
@@ -25,14 +49,17 @@ class SearchMirrorModule extends REXClientModule {
     return 'SearchMirrorModule (overrride in subclasses)'
   }
 
-  insertMirrorSite(identifier, location) {
+  insertMirrorSite(identifier: string, location: string) {
     const wrapper = document.createElement('div')
 
     const htmlCode = '<iframe id="background_fetch_frame' + identifier + '" src="' + location + '" style="display: block; height: 8px; opacity: 1.0;"></iframe>'
 
     wrapper.innerHTML = htmlCode
 
-    document.querySelector('body').appendChild(wrapper.firstChild)
+    const body = document.querySelector('body')
+    if (body !== null && wrapper.firstChild !== null) {
+      body.appendChild(wrapper.firstChild)
+    }
 
     console.log('[Search Mirror] Inserted ' + identifier + ' background search: ' + location)
   }
@@ -44,9 +71,9 @@ class SearchMirrorModule extends REXClientModule {
       .then((response:{ [name: string]: any; }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const configuration = response as REXConfiguration
 
-        this.configuration = configuration['search_mirror']
+        this.configuration = configuration['search_mirror'] as REXSearchMirrorConfiguration | undefined ?? null
 
-        if (this.configuration === undefined) {
+        if (this.configuration === null) {
           this.configuration = {
             enabled: true,
             'secondary_sites': []
@@ -63,15 +90,15 @@ class SearchMirrorModule extends REXClientModule {
 
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame
-            let matchedSearchSiteKey = null
+            let matchedSearchSiteKey: string | null = null
 
             for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
-              if ((siteObject as REXSearchSiteBrowserModule).matchesSearchSite(window.location)) {
+              if (siteObject.matchesSearchSite(window.location)) {
                 matchedSearchSiteKey = siteKey
               }
             }
 
-            if (this.configuration['primary_sites'] !== undefined && this.configuration['primary_sites'].includes(matchedSearchSiteKey) === false) {
+            if (this.configuration['primary_sites'] !== undefined && matchedSearchSiteKey !== null && this.configuration['primary_sites'].includes(matchedSearchSiteKey) === false) {
               matchedSearchSiteKey = null
             }
 
@@ -86,7 +113,7 @@ class SearchMirrorModule extends REXClientModule {
               for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
                 if (siteKey !== matchedSearchSiteKey) {
                   const existingFrame = document.getElementById('background_fetch_frame_' + siteKey)
-                  const searchLocation = (siteObject as REXSearchSiteBrowserModule).searchUrl(query, queryType)
+                  const searchLocation = siteObject.searchUrl(query, queryType)
 
                   if (this.configuration['secondary-sites'] !== undefined && this.configuration['secondary-sites'].includes(siteKey) === false) {
                     // Skip -- not enabled
@@ -99,19 +126,21 @@ class SearchMirrorModule extends REXClientModule {
               thisSearchSite.isPrimarySite = true
 
               this.registerPageChangeListener(() => {
-                thisSearchSite.extractResults(this.configuration)
+                if (this.configuration !== null) {
+                  thisSearchSite.extractResults(this.configuration)
+                }
               })
             }
           } else {
-            let matchedSearchSiteKey = null
+            let matchedSearchSiteKey: string | null = null
 
             for (const [siteKey, siteObject] of Object.entries(this.searchMirrorSites)) {
-              if ((siteObject as REXSearchSiteBrowserModule).matchesSearchSite(window.location)) {
+              if (siteObject.matchesSearchSite(window.location)) {
                 matchedSearchSiteKey = siteKey
               }
             }
 
-            if (this.configuration['secondary_sites'] !== undefined && this.configuration['secondary_sites'].includes(matchedSearchSiteKey) === false) {
+            if (this.configuration['secondary_sites'] !== undefined && matchedSearchSiteKey !== null && this.configuration['secondary_sites'].includes(matchedSearchSiteKey) === false) {
               matchedSearchSiteKey = null
             }
 
@@ -123,7 +152,9 @@ class SearchMirrorModule extends REXClientModule {
               thisSearchSite.isPrimarySite = false
 
               this.registerPageChangeListener(() => {
-                thisSearchSite.extractResults(this.configuration)
+                if (this.configuration !== null) {
+                  thisSearchSite.extractResults(this.configuration)
+                }
               })
             }
           }
@@ -131,22 +162,16 @@ class SearchMirrorModule extends REXClientModule {
       })
   }
 
-  registerSearchMirrorSite(siteKey, siteObject) {
+  registerSearchMirrorSite(siteKey: string, siteObject: REXSearchSiteBrowserModule) {
     this.searchMirrorSites[siteKey] = siteObject
   }
 
-  registerPageChangeListener(callback) {
+  registerPageChangeListener(callback: PageChangeListener) {
     this.pageChangeListeners.push(callback)
   }
 
-  registerModuleCallback(configuration) {
-    let searchConfig = configuration['search_mirror']
-
-    if (searchConfig === undefined) {
-      searchConfig = {
-        enabled: true
-      }
-    }
+  registerModuleCallback(configuration: REXConfiguration) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    // No-op; hook retained for subclass overrides.
   }
 }
 

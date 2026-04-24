@@ -1,5 +1,10 @@
-import { REXConfiguration } from '@bric/rex-core/extension'
+import { REXConfiguration } from '@bric/rex-core/common'
 import rexCorePlugin, { REXServiceWorkerModule } from '@bric/rex-core/service-worker'
+
+interface REXSearchMirrorWorkerConfiguration {
+  'url-filters'?: string[]
+  [key: string]: unknown
+}
 
 const stringToId = function (str:string) {
   let id:number = str.length
@@ -15,6 +20,21 @@ const stringToId = function (str:string) {
   return id % 5000
 }
 
+export interface SearchSuggestionItem {
+  term: unknown
+  subtitle?: string
+  data?: unknown
+}
+
+export interface SearchSuggestionsPayload {
+  engine: string
+  query: string
+  initiator: string | undefined
+  search_url: string
+  suggestions?: SearchSuggestionItem[]
+  raw_suggestions?: string
+}
+
 export class REXSearchSiteWorkerModule {
   setup() {
     // Implement in subclasses to capture search suggestions and other background traffic
@@ -22,7 +42,7 @@ export class REXSearchSiteWorkerModule {
 }
 
 class REXSearchMirrorModule extends REXServiceWorkerModule {
-  configuration = {}
+  configuration: REXSearchMirrorWorkerConfiguration = {}
 
   configurationDetails():any { // eslint-disable-line @typescript-eslint/no-explicit-any
     return {
@@ -36,10 +56,10 @@ class REXSearchMirrorModule extends REXServiceWorkerModule {
     }
   }
 
-  fetchURLContent(request, sender, sendResponse) {
+  fetchURLContent(request: { content?: string; url?: string }, _sender: chrome.runtime.MessageSender, sendResponse: (response?: string) => void) {
     console.log('[Search Mirror] Fetching ' + request.url + '...')
 
-    if (request.content === 'fetch_url_content') {
+    if (request.content === 'fetch_url_content' && request.url !== undefined) {
       const url = request.url
 
       fetch(url, {
@@ -62,11 +82,7 @@ class REXSearchMirrorModule extends REXServiceWorkerModule {
     rexCorePlugin.fetchConfiguration()
       .then((configuration:REXConfiguration) => {
         if (configuration !== null && configuration !== undefined) {
-          this.configuration = configuration['search_mirror']
-
-          if (this.configuration === null || this.configuration === undefined) {
-            this.configuration = {}
-          }
+          this.configuration = (configuration['search_mirror'] as REXSearchMirrorWorkerConfiguration | undefined) ?? {}
 
           let urlFilters = [
             '||bing.com/',
@@ -97,8 +113,10 @@ class REXSearchMirrorModule extends REXServiceWorkerModule {
             chrome.declarativeNetRequest.updateSessionRules({
               addRules: [stripRule]
             }, () => {
-              if (chrome.runtime['lastError']) {
-                console.log('[Search Mirror] ' + chrome.runtime['lastError'].message)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const lastError = (chrome.runtime as any).lastError
+              if (lastError) {
+                console.log('[Search Mirror] ' + lastError.message)
               }
             })
 

@@ -1,9 +1,9 @@
 import { dispatchEvent } from '@bric/rex-core/service-worker'
 
-import { REXSearchSiteWorkerModule } from '../service-worker.mjs'
+import { REXSearchSiteWorkerModule, SearchSuggestionItem, SearchSuggestionsPayload } from '../service-worker.mjs'
 
 export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
-  parseListItem(itemString) {
+  parseListItem(itemString: string): string[] | null {
     if (itemString.includes('pp_title')) {
       const ppIndex = itemString.indexOf('pp_title')
 
@@ -34,10 +34,10 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
     return null
   }
 
-  parseMatches(fullString) {
+  parseMatches(fullString: string): string[][] {
     const listItems = fullString.split('</li>')
 
-    const matches = []
+    const matches: string[][] = []
 
     for (const listItem of listItems) {
       if (listItem.includes('<li')) {
@@ -53,7 +53,7 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
   }
 
   setup() {
-    chrome.webRequest.onCompleted.addListener(async function (details) {
+    chrome.webRequest.onCompleted.addListener(async (details) => {
       if (details.initiator === undefined || details.initiator.includes('chrome-extension://')) {
         return
       }
@@ -70,8 +70,8 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
         if (query !== null && query !== '') {
           fetch(details.url)
             .then(response => response.text())
-            .then(function (data) {
-              const payload = {
+            .then((data) => {
+              const payload: SearchSuggestionsPayload = {
                 engine: 'bing',
                 query,
                 initiator: details.initiator,
@@ -80,7 +80,7 @@ export class REXBingSiteWorkerModule extends REXSearchSiteWorkerModule {
 
               const matches = this.parseMatches(data)
 
-              const dataPayload = []
+              const dataPayload: SearchSuggestionItem[] = []
 
               for (const match of matches) {
                 if (match.length > 1) {
