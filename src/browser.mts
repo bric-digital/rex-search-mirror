@@ -3,6 +3,7 @@ import { REXConfiguration } from '@bric/rex-core/common'
 
 export interface REXSearchMirrorConfiguration {
   enabled: boolean
+  debug?: boolean
   primary_sites?: string[]
   secondary_sites?: string[]
   'secondary-sites'?: string[]
@@ -41,12 +42,8 @@ class SearchMirrorModule extends REXClientModule {
   mutationObserver: MutationObserver | null = null
   configuration: REXSearchMirrorConfiguration | null = null
 
-  constructor() {
-    super()
-  }
-
   toString():string {
-    return 'SearchMirrorModule (overrride in subclasses)'
+    return 'SearchMirrorModule'
   }
 
   insertMirrorSite(identifier: string, location: string) {
@@ -87,6 +84,9 @@ class SearchMirrorModule extends REXClientModule {
         })
 
         this.mutationObserver.observe(document, {subtree: true, childList: true});
+
+        console.log('config')
+        console.log(this.configuration)
 
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame

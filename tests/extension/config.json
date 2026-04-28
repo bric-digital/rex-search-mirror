@@ -1,0 +1,17 @@
+{
+    "configuration_url": "config.json",
+    "identifier": "rex-search-mirror-test",
+    "search_mirror": {
+        "enabled": true,
+        "debug": true,
+        "include_news_elements": true,
+        "include_ai_elements": true,
+        "primary_sites": ["google", "bing", "duckduckgo"],
+        "secondary_sites": ["google", "bing", "duckduckgo"]
+    },
+    "ui": [{
+        "title": "REX Search Mirror Testing Extension",
+        "identifier": "main",
+        "default": true
+    }]
+}

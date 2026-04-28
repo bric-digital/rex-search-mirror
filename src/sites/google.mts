@@ -1,5 +1,7 @@
 import $ from 'jquery'
 
+import { DateString, NewsBlurb, Position } from '@bric/rex-types/types'
+
 import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
@@ -7,11 +9,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
   resultCount = 0
   recordedOverview = false
   recordedNews = false
-
-  constructor() {
-    super()
-    this.isPrimarySite = true
-  }
+  isPrimarySite = true
 
   matchesSearchSite(location: Location): boolean {
     if (['google.com', 'www.google.com'].includes(location.host) === false) {
@@ -78,6 +76,11 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
   }
 
   extractResults(configuration: REXSearchMirrorConfiguration) {
+    if (configuration['debug']) {
+      console.log('[Search Mirror / google] Looking for results...')
+      console.log(configuration)
+    }
+
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
 
@@ -236,6 +239,79 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
       })
     }
 
+    if (configuration['include_news_elements']) {
+      const newsSvgPath = $('path[d="M489-460l91-55l91,55L647-564l80-69l-105-9l-42-98l-42,98l-105,9l80,69L489-460ZM228-85q-33,5-59.5-15.5T138-154L85-591q-4-33 16-59t53-30l46-6v326q0,66 47,113t113,47H732q-6,24-24,41.5T664-138L228-85ZM360-280q-33,0-56.5-23.5T280-360V-800q0-33 23.5-56.5T360-880H800q33,0 56.5,23.5T880-800v440q0,33-23.5,56.5T800-280H360Z"]')
+      
+      const overview = $(newsSvgPath).parent().parent().parent().parent().parent().parent().parent().parent().parent()
+
+      overview.find('div[role="heading"]').each((index, element) => {
+        const aLink = $(element).parent().parent().parent()
+
+        let href:string|undefined = $(aLink).attr('href')
+
+        const lookupKey = `news-${href}`
+
+        if (href !== undefined && this.linkCache[lookupKey] === undefined) {
+          let posted = new DateString(`${Date.now() / 1000}`)
+          let source = ''
+          let position:Position = {
+            'top': -1,
+            'left': -1,
+            'width': -1,
+            'height': -1,
+          }
+
+          const boundingBox = $(element).parent().parent()
+
+          if (boundingBox !== undefined) {
+            const rect = boundingBox.get(0)?.getBoundingClientRect()
+
+            if (rect !== undefined) {
+              position = rect
+            }
+          }
+
+          $(element).parent().find('span').each((index, spanElement) => {
+            if ($(spanElement).attr('data-ts') !== undefined) {
+              const timestamp = $(spanElement).attr('data-ts')
+
+              if (timestamp !== undefined) {
+                posted = new DateString(timestamp)
+              }
+            } else if ($(spanElement).attr('aria-label') === 'About this result') {
+              // Pass
+            } else if (source === '') {
+              source = $(spanElement).text()
+            }
+          })
+
+          const blurb:NewsBlurb = {
+            'headline': $(element).text(),
+            posted,
+            source,
+            'authors': [],
+            'url': href,
+            position
+          }
+
+          if (configuration['debug']) {
+            console.log('[Search Mirror / google] Found news result]')
+            console.log(blurb)
+          }
+
+          chrome.runtime.sendMessage({
+            'messageType': 'logEvent',
+            'event': {
+              'name': 'search-mirror-result-news',
+              'payload': blurb
+              }
+          })
+
+          this.linkCache[lookupKey] = blurb
+        }
+      })
+    }
+
     if (configuration['include_ai_elements']) {
       if (this.recordedOverview === false) {
         // AI Overview
@@ -243,7 +319,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
         this.recordedOverview = true
 
         window.setTimeout(() => {
-          const aiSvgPath = $('path[d="M235.5 471C235.5 438.423 229.22 407.807 216.66 379.155C204.492 350.503 187.811 325.579 166.616 304.384C145.421 283.189 120.498 266.508 91.845 254.34C63.1925 241.78 32.5775 235.5 0 235.5C32.5775 235.5 63.1925 229.416 91.845 217.249C120.498 204.689 145.421 187.811 166.616 166.616C187.811 145.421 204.492 120.497 216.66 91.845C229.22 63.1925 235.5 32.5775 235.5 0C235.5 32.5775 241.584 63.1925 253.751 91.845C266.311 120.497 283.189 145.421 304.384 166.616C325.579 187.811 350.503 204.689 379.155 217.249C407.807 229.416 438.423 235.5 471 235.5C438.423 235.5 407.807 241.78 379.155 254.34C350.503 266.508 325.579 283.189 304.384 304.384C283.189 325.579 266.311 350.503 253.751 379.155C241.584 407.807 235.5 438.423 235.5 471Z"]')
+          const aiSvgPath = $('ppath[d="M235.5 471C235.5 438.423 229.22 407.807 216.66 379.155C204.492 350.503 187.811 325.579 166.616 304.384C145.421 283.189 120.498 266.508 91.845 254.34C63.1925 241.78 32.5775 235.5 0 235.5C32.5775 235.5 63.1925 229.416 91.845 217.249C120.498 204.689 145.421 187.811 166.616 166.616C187.811 145.421 204.492 120.497 216.66 91.845C229.22 63.1925 235.5 32.5775 235.5 0C235.5 32.5775 241.584 63.1925 253.751 91.845C266.311 120.497 283.189 145.421 304.384 166.616C325.579 187.811 350.503 204.689 379.155 217.249C407.807 229.416 438.423 235.5 471 235.5C438.423 235.5 407.807 241.78 379.155 254.34C350.503 266.508 325.579 283.189 304.384 304.384C283.189 325.579 266.311 350.503 253.751 379.155C241.584 407.807 235.5 438.423 235.5 471Z"]')
 
           aiSvgPath.each((index, item) => {
             console.log('[Search Mirror / google] Got AI result]')
