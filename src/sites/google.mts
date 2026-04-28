@@ -76,9 +76,8 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
   }
 
   extractResults(configuration: REXSearchMirrorConfiguration) {
-    if (configuration['debug']) {
+    if (configuration.debug) {
       console.log('[Search Mirror / google] Looking for results...')
-      console.log(configuration)
     }
 
     const query = this.extractQuery(window.location)
@@ -223,7 +222,9 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
               index: this.resultCount
             }
 
-            console.log('[Search Mirror / google] Got result[' + this.resultCount + ']: ' + title)
+            if (configuration.debug) {
+              console.log('[Search Mirror / google] Got result[' + this.resultCount + ']: ' + title)
+            }
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -294,7 +295,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
             position
           }
 
-          if (configuration['debug']) {
+          if (configuration.debug) {
             console.log('[Search Mirror / google] Found news result]')
             console.log(blurb)
           }
@@ -322,7 +323,9 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
           const aiSvgPath = $('ppath[d="M235.5 471C235.5 438.423 229.22 407.807 216.66 379.155C204.492 350.503 187.811 325.579 166.616 304.384C145.421 283.189 120.498 266.508 91.845 254.34C63.1925 241.78 32.5775 235.5 0 235.5C32.5775 235.5 63.1925 229.416 91.845 217.249C120.498 204.689 145.421 187.811 166.616 166.616C187.811 145.421 204.492 120.497 216.66 91.845C229.22 63.1925 235.5 32.5775 235.5 0C235.5 32.5775 241.584 63.1925 253.751 91.845C266.311 120.497 283.189 145.421 304.384 166.616C325.579 187.811 350.503 204.689 379.155 217.249C407.807 229.416 438.423 235.5 471 235.5C438.423 235.5 407.807 241.78 379.155 254.34C350.503 266.508 325.579 283.189 304.384 304.384C283.189 325.579 266.311 350.503 253.751 379.155C241.584 407.807 235.5 438.423 235.5 471Z"]')
 
           aiSvgPath.each((index, item) => {
-            console.log('[Search Mirror / google] Got AI result]')
+            if (configuration.debug) {
+              console.log('[Search Mirror / google] Got AI result]')
+            }
 
             const overview = $(item).parent().parent().parent().parent().parent()
 
@@ -371,8 +374,6 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
           const aiSvgPath = $('[data-news-doc-id]')
 
           aiSvgPath.each((index, item) => {
-            console.log('[Search Mirror / google] Got News result]')
-
             const blurb = $(item)
 
             const blurbEl = blurb.get(0)

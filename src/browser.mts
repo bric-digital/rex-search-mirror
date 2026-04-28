@@ -57,8 +57,6 @@ class SearchMirrorModule extends REXClientModule {
     if (body !== null && wrapper.firstChild !== null) {
       body.appendChild(wrapper.firstChild)
     }
-
-    console.log('[Search Mirror] Inserted ' + identifier + ' background search: ' + location)
   }
 
   setup() {
@@ -84,9 +82,6 @@ class SearchMirrorModule extends REXClientModule {
         })
 
         this.mutationObserver.observe(document, {subtree: true, childList: true});
-
-        console.log('config')
-        console.log(this.configuration)
 
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame
