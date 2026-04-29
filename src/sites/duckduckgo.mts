@@ -1,5 +1,7 @@
 import $ from 'jquery'
 
+import { DateString, NewsBlurb, Position } from '@bric/rex-types/types'
+
 import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
@@ -173,22 +175,26 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
           const aiSvgPath = $('li:has(path[d="M3.375 6a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25zM8.5 9.375c0 .345-.28.625-.625.625H.625a.625.625 0 1 1 0-1.25h7.25c.345 0 .625.28.625.625M10.375 14a.625.625 0 1 0 0-1.25H.625a.625.625 0 1 0 0 1.25z"])')
 
           aiSvgPath.each((index, item) => {
-            console.log('[Search Mirror / duckduckgo] Got AI result]')
-
             const aiEl = $(item).get(0)
+
             if (aiEl === undefined) {
               return
             }
             const content = aiEl.innerHTML
 
             const payload = {
-                  search_url: window.location.href,
-                  content,
-                  query,
-                  type: queryType,
-                  foreground: this.isPrimarySite,
-                  engine: 'duckduckgo'
-                }
+              search_url: window.location.href,
+              content,
+              query,
+              type: queryType,
+              foreground: this.isPrimarySite,
+              engine: 'duckduckgo'
+            }
+
+            if (configuration.debug) {
+              console.log('[Search Mirror / duckduckgo] Found AI result')
+              console.log(payload)
+            }
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
@@ -211,51 +217,74 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
     }
 
     if (configuration['include_news_elements']) {
-      if (this.recordedNews === false) {
-        // News Overview
+      const newsList = $('li[data-layout="news"] article')
+      
+      newsList.each((index, element) => {
+        const aLink = $(element).parent()
 
-        window.setTimeout(() => {
-          const newsPath = $('div[data-react-module-id="news"] li')
+        let href:string|undefined = $(aLink).attr('href')
 
+        const lookupKey = `news-${href}`
 
-          newsPath.each((index, item) => {
-            console.log('[Search Mirror / bing] Got News result]')
+        if (href !== undefined && this.linkCache[lookupKey] === undefined) {
+          let posted = new DateString(`${Date.now() / 1000}`)
+          let source = ''
+          let position:Position = {
+            'top': -1,
+            'left': -1,
+            'width': -1,
+            'height': -1,
+          }
 
-            const blurb = $(item)
+          const boundingBox = $(element)
 
-            const blurbEl = blurb.get(0)
-            if (blurbEl === undefined) {
-              return
+          if (boundingBox !== undefined) {
+            const rect = boundingBox.get(0)?.getBoundingClientRect()
+
+            if (rect !== undefined) {
+              position.top = rect.top
+              position.left = rect.left
+              position.width = rect.width
+              position.height = rect.height
             }
-            const content = blurbEl.outerHTML
+          }
 
-            const payload = {
-                  search_url: window.location.href,
-                  content,
-                  query,
-                  type: queryType,
-                  foreground: this.isPrimarySite,
-                  engine: 'duckduckgo',
-                }
-
-            chrome.runtime.sendMessage({
-              'messageType': 'logEvent',
-              'event': {
-                'name': 'search-mirror-result-news',
-                payload
-              }
-            })
-
-            chrome.runtime.sendMessage({
-              'messageType': 'logEvent',
-              'event': {
-                'name': 'search-mirror-result',
-                payload
-              }
-            })
+          $(element).find('img[height="16"]').each((index, imgElement) => {
+            source = $(imgElement).parent().find('span').text()
           })
-        }, 2500)
-      }
+
+          $(element).find('div').each((index, divElement) => {
+            if ($(divElement).text().endsWith(' ago')) {
+              posted = new DateString($(divElement).text())
+            }
+          })
+
+          const blurb:NewsBlurb = {
+            'headline': `${$(element).find('h3').attr('title')}`,
+            posted,
+            source,
+            'authors': [],
+            'url': href,
+            position,
+            engine: 'duckduckgo',
+          }
+
+          if (configuration.debug) {
+            console.log('[Search Mirror / duckduckgo] Found news result')
+            console.log(blurb)
+          }
+
+          chrome.runtime.sendMessage({
+            'messageType': 'logEvent',
+            'event': {
+              'name': 'search-mirror-result-news',
+              'payload': blurb
+            }
+          })
+
+          this.linkCache[lookupKey] = blurb
+        }
+      })
     }
   }
 }

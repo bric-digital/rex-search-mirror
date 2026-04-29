@@ -1,5 +1,7 @@
 import $ from 'jquery'
 
+import { DateString, NewsBlurb, Position } from '@bric/rex-types/types'
+
 import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
 
 export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
@@ -233,8 +235,6 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
           const aiSvgPath = $('li:has(path[d="m15.226 1.353-.348-1.07a.423.423 0 0 0-.799 0l-.348 1.07a2.2 2.2 0 0 1-1.377 1.397l-1.071.348a.423.423 0 0 0 0 .798l1.071.348a2.2 2.2 0 0 1 1.399 1.403l.348 1.07a.423.423 0 0 0 .798 0l.349-1.07a2.2 2.2 0 0 1 1.398-1.397l1.072-.348a.423.423 0 0 0 0-.798l-.022-.006-1.072-.348a2.2 2.2 0 0 1-1.398-1.397M19.018 7.965l.765.248.015.004a.303.303 0 0 1 0 .57l-.765.248a1.58 1.58 0 0 0-1 .999l-.248.764a.302.302 0 0 1-.57 0v-.002l-.249-.762a1.58 1.58 0 0 0-.999-1.002l-.765-.249a.303.303 0 0 1 0-.57l.765-.248a1.58 1.58 0 0 0 .984-.999l.249-.764a.302.302 0 0 1 .57 0l.249.764a1.58 1.58 0 0 0 .999.999"])')
 
           aiSvgPath.each((index, item) => {
-            console.log('[Search Mirror / bing] Got AI result]')
-
             const aiEl = $(item).get(0)
             if (aiEl === undefined) {
               return
@@ -242,19 +242,25 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
             const content = aiEl.innerHTML
 
             const payload = {
-                  search_url: window.location.href,
-                  content,
-                  query,
-                  type: queryType,
-                  foreground: this.isPrimarySite,
-                  engine: 'bing'
-                }
+              search_url: window.location.href,
+              content,
+              query,
+              type: queryType,
+              foreground: this.isPrimarySite,
+              engine: 'bing'
+            }
+
+            if (configuration.debug) {
+              console.log('[Search Mirror / duckduckgo] Found AI result')
+              console.log(payload)
+            }
 
             chrome.runtime.sendMessage({
               'messageType': 'logEvent',
               'event': {
                 'name': 'search-mirror-result-ai',
-                payload
+                payload,
+                engine: 'bing',
               }
             })
 
@@ -278,49 +284,156 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
 
         const selectors = [
           '.nslist_card_main',
-          '.na_citem'
+          '.nscardlite_main'
         ]
 
         for (const selector of selectors) {
           window.setTimeout(() => {
-            const aiSvgPath = $(selector)
+            const newsPath = $(selector)
 
-            aiSvgPath.each((index, item) => {
-              console.log('[Search Mirror / bing] Got News result]')
+            if (selector === '.nslist_card_main') {
+              newsPath.each((index, item) => {
+                const urlElement = $(item).parent().parent().parent()
 
-              const blurb = $(item)
+                const href = urlElement.attr('url')
 
-              const blurbEl = blurb.get(0)
-              if (blurbEl === undefined) {
-                return
-              }
-              const content = blurbEl.outerHTML
+                const lookupKey = `news-${href}`
 
-              const payload = {
-                    search_url: window.location.href,
-                    content,
-                    query,
-                    type: queryType,
-                    foreground: this.isPrimarySite,
+                if (href !== undefined && this.linkCache[lookupKey] === undefined) {
+                  console.log('[Search Mirror / bing] Got news result')
+
+                  let posted = new DateString(`${Date.now() / 1000}`)
+                  let source = ''
+                  let position:Position = {
+                    'top': -1,
+                    'left': -1,
+                    'width': -1,
+                    'height': -1,
+                  }
+
+                  const boundingBox = $(item)
+
+                  if (boundingBox !== undefined) {
+                    const rect = boundingBox.get(0)?.getBoundingClientRect()
+
+                    if (rect !== undefined) {
+                      position.top = rect.top
+                      position.left = rect.left
+                      position.width = rect.width
+                      position.height = rect.height
+                    }
+                  }
+
+                  $(item).find('cite').each((index, citeElement) => {
+                    const title = $(citeElement).attr('title')
+
+                    if (title !== undefined) {
+                      source = title
+                    }
+                  })
+
+                  $(item).find('span.cap_txt').each((index, dateElement) => {
+                    posted = new DateString($(dateElement).text())
+                  })
+
+                  const blurb:NewsBlurb = {
+                    'headline': $(item).find('.nslist_card_title').text(),
+                    posted,
+                    source,
+                    'authors': [],
+                    'url': href,
+                    position,
                     engine: 'bing',
                   }
 
-              chrome.runtime.sendMessage({
-                'messageType': 'logEvent',
-                'event': {
-                  'name': 'search-mirror-result-news',
-                  payload
-                }
-              })
+                  if (configuration.debug) {
+                    console.log('[Search Mirror / duckduckgo] Found news result')
+                    console.log(blurb)
+                  }
 
-              chrome.runtime.sendMessage({
-                'messageType': 'logEvent',
-                'event': {
-                  'name': 'search-mirror-result',
-                  payload
+                  chrome.runtime.sendMessage({
+                    'messageType': 'logEvent',
+                    'event': {
+                      'name': 'search-mirror-result-news',
+                      'payload': blurb
+                    }
+                  })
+
+                  this.linkCache[lookupKey] = blurb
                 }
               })
-            })
+            } else if (selector === '.nscardlite_main') {
+              newsPath.each((index, item) => {
+                const urlElement = $(item).parent()
+
+                const href = urlElement.attr('url')
+
+                const lookupKey = `news-${href}`
+
+                if (href !== undefined && this.linkCache[lookupKey] === undefined) {
+                  console.log('[Search Mirror / bing] Got news result')
+
+                  let posted = new DateString(`${Date.now() / 1000}`)
+                  let source = ''
+                  let position:Position = {
+                    'top': -1,
+                    'left': -1,
+                    'width': -1,
+                    'height': -1,
+                  }
+
+                  const boundingBox = $(item)
+
+                  if (boundingBox !== undefined) {
+                    const rect = boundingBox.get(0)?.getBoundingClientRect()
+
+                    if (rect !== undefined) {
+                      position.top = rect.top
+                      position.left = rect.left
+                      position.width = rect.width
+                      position.height = rect.height
+                    }
+                  }
+
+                  $(item).find('cite').each((index, citeElement) => {
+                    const title = $(citeElement).attr('title')
+
+                    if (title !== undefined) {
+                      source = title
+                    }
+                  })
+
+                  $(item).find('span.cap_txt').each((index, dateElement) => {
+                    posted = new DateString($(dateElement).text())
+                  })
+
+                  const blurb:NewsBlurb = {
+                    'headline': $(item).find('.nscardlite_title').text(),
+                    posted,
+                    source,
+                    'authors': [],
+                    'url': href,
+                    position,
+                    engine: 'bing',
+                  }
+
+                  if (configuration.debug) {
+                    console.log('[Search Mirror / duckduckgo] Found news result')
+                    console.log(blurb)
+                  }
+
+                  chrome.runtime.sendMessage({
+                    'messageType': 'logEvent',
+                    'event': {
+                      'name': 'search-mirror-result-news',
+                      'payload': blurb
+                    }
+                  })
+
+                  this.linkCache[lookupKey] = blurb
+                }
+              })
+            }
           }, 2500)
         }
       }

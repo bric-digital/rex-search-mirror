@@ -268,7 +268,10 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
             const rect = boundingBox.get(0)?.getBoundingClientRect()
 
             if (rect !== undefined) {
-              position = rect
+              position.top = rect.top
+              position.left = rect.left
+              position.width = rect.width
+              position.height = rect.height
             }
           }
 
@@ -292,7 +295,8 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
             source,
             'authors': [],
             'url': href,
-            position
+            position,
+            engine: 'google',
           }
 
           if (configuration.debug) {
@@ -348,53 +352,6 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
               'messageType': 'logEvent',
               'event': {
                 'name': 'search-mirror-result-ai',
-                payload
-              }
-            })
-
-            chrome.runtime.sendMessage({
-              'messageType': 'logEvent',
-              'event': {
-                'name': 'search-mirror-result',
-                payload
-              }
-            })
-          })
-        }, 2500)
-      }
-    }
-
-    if (configuration['include_news_elements']) {
-      if (this.recordedNews === false) {
-        // News Overview
-
-        this.recordedNews = true
-
-        window.setTimeout(() => {
-          const aiSvgPath = $('[data-news-doc-id]')
-
-          aiSvgPath.each((index, item) => {
-            const blurb = $(item)
-
-            const blurbEl = blurb.get(0)
-            if (blurbEl === undefined) {
-              return
-            }
-            const content = blurbEl.outerHTML
-
-            const payload = {
-                  search_url: window.location.href,
-                  content,
-                  query,
-                  type: queryType,
-                  foreground: this.isPrimarySite,
-                  engine: 'google',
-                }
-
-            chrome.runtime.sendMessage({
-              'messageType': 'logEvent',
-              'event': {
-                'name': 'search-mirror-result-news',
                 payload
               }
             })
