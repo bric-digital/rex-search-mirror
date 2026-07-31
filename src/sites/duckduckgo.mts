@@ -43,7 +43,7 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
     }
 
     if (queryType === 'news') {
-      return 'https://duckduckgo.com/&iar=news&ia=news&q=' + encodeURIComponent(query)
+      return 'https://duckduckgo.com/?iar=news&ia=news&q=' + encodeURIComponent(query)
     }
 
     if (queryType === 'shopping') {
