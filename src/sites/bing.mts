@@ -304,7 +304,7 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
 
                   let posted = new DateString(`${Date.now() / 1000}`)
                   let source = ''
-                  let position:Position = {
+                  const position:Position = {
                     'top': -1,
                     'left': -1,
                     'width': -1,
@@ -375,7 +375,7 @@ export class REXBingSiteBrowserModule extends REXSearchSiteBrowserModule {
 
                   let posted = new DateString(`${Date.now() / 1000}`)
                   let source = ''
-                  let position:Position = {
+                  const position:Position = {
                     'top': -1,
                     'left': -1,
                     'width': -1,

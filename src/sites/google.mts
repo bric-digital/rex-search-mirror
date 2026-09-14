@@ -248,14 +248,14 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
       overview.find('div[role="heading"]').each((index, element) => {
         const aLink = $(element).parent().parent().parent()
 
-        let href:string|undefined = $(aLink).attr('href')
+        const href:string|undefined = $(aLink).attr('href')
 
         const lookupKey = `news-${href}`
 
         if (href !== undefined && this.linkCache[lookupKey] === undefined) {
           let posted = new DateString(`${Date.now() / 1000}`)
           let source = ''
-          let position:Position = {
+          const position:Position = {
             'top': -1,
             'left': -1,
             'width': -1,

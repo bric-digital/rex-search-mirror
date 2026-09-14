@@ -222,14 +222,14 @@ export class REXDDGSiteBrowserModule extends REXSearchSiteBrowserModule {
       newsList.each((index, element) => {
         const aLink = $(element).parent()
 
-        let href:string|undefined = $(aLink).attr('href')
+        const href:string|undefined = $(aLink).attr('href')
 
         const lookupKey = `news-${href}`
 
         if (href !== undefined && this.linkCache[lookupKey] === undefined) {
           let posted = new DateString(`${Date.now() / 1000}`)
           let source = ''
-          let position:Position = {
+          const position:Position = {
             'top': -1,
             'left': -1,
             'width': -1,
