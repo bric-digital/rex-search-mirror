@@ -2,7 +2,24 @@ import $ from 'jquery'
 
 import { DateString, NewsBlurb, Position } from '@bric/rex-types/types'
 
-import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration } from '../browser.mjs'
+import mirrorManager, { REXSearchSiteBrowserModule, REXSearchMirrorConfiguration, isUnpackedBuild } from '../browser.mjs'
+import { SERP_FEATURE_DETECTORS, SerpFeatureKey, ReviewPart, isSerpFeatureKey, tagFeature, ensureOutlineStyle, substituteReviewContent } from './serp-features.mjs'
+
+const DEFAULT_SETTLE_MS = 1500
+
+// One results page as seen by the SERP feature events: a fresh id per query so
+// every event about the same page joins on serp_id.
+interface SerpSession {
+  id: string
+  key: string
+  query: string | null
+  startedAt: number
+  featuresChecked: SerpFeatureKey[]
+  featuresFound: SerpFeatureKey[]
+  substituted: ReviewPart[]
+  summaryTimer: number | null
+  summarySent: boolean
+}
 
 export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
   linkCache: Record<string, unknown> = {}
@@ -10,6 +27,136 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
   recordedOverview = false
   recordedNews = false
   isPrimarySite = true
+  serpSession: SerpSession | null = null
+
+  currentSerpSession (query: string | null, queryType: string | null): SerpSession {
+    const key = `${queryType}:${query}`
+
+    if (this.serpSession !== null && this.serpSession.key === key) {
+      return this.serpSession
+    }
+
+    if (this.serpSession !== null && this.serpSession.summaryTimer !== null) {
+      this.sendSerpSummary(this.serpSession)
+    }
+
+    this.serpSession = {
+      id: crypto.randomUUID(),
+      key,
+      query,
+      startedAt: Date.now(),
+      featuresChecked: [],
+      featuresFound: [],
+      substituted: [],
+      summaryTimer: null,
+      summarySent: false
+    }
+
+    return this.serpSession
+  }
+
+  logSerpEvent (name: string, session: SerpSession, details: Record<string, unknown>, date: number) {
+    chrome.runtime.sendMessage({
+      'messageType': 'logEvent',
+      'event': {
+        name,
+        payload: {
+          serp_id: session.id,
+          query: session.query,
+          search_url: window.location.href,
+          engine: 'google',
+          foreground: this.isPrimarySite,
+          ...details,
+          date
+        }
+      }
+    })
+  }
+
+  detectSerpFeatures (configuration: REXSearchMirrorConfiguration, session: SerpSession) {
+    const settings = configuration.serp_features
+
+    if (settings === undefined || settings.enabled !== true) {
+      return
+    }
+
+    const requested = settings.features ?? Object.keys(SERP_FEATURE_DETECTORS)
+
+    session.featuresChecked = requested.filter(isSerpFeatureKey)
+
+    const development = isUnpackedBuild()
+
+    for (const key of session.featuresChecked) {
+      const feature = SERP_FEATURE_DETECTORS[key](document)
+
+      if (feature === null) {
+        continue
+      }
+
+      tagFeature(feature)
+
+      if (session.featuresFound.includes(key) === false) {
+        session.featuresFound.push(key)
+
+        if (configuration.debug) {
+          console.log('[Search Mirror / google] Found SERP feature ' + key + ' with ' + feature.listings.length + ' listings')
+        }
+
+        this.logSerpEvent('search-mirror-serp-feature', session, {
+          feature: key,
+          listings: feature.listings.map((listing) => ({ name: listing.name, sponsored: listing.sponsored }))
+        }, Date.now())
+      }
+
+      if (development && settings.outline === true) {
+        ensureOutlineStyle(document)
+      }
+
+      if (development && settings.substitute === true) {
+        for (const part of substituteReviewContent(feature)) {
+          if (session.substituted.includes(part) === false) {
+            session.substituted.push(part)
+          }
+        }
+      }
+    }
+
+    this.scheduleSerpSummary(session, settings.settle_ms ?? DEFAULT_SETTLE_MS)
+  }
+
+  scheduleSerpSummary (session: SerpSession, settleMs: number) {
+    if (session.summarySent) {
+      return
+    }
+
+    if (session.summaryTimer !== null) {
+      window.clearTimeout(session.summaryTimer)
+    }
+
+    session.summaryTimer = window.setTimeout(() => this.sendSerpSummary(session), settleMs)
+  }
+
+  sendSerpSummary (session: SerpSession) {
+    if (session.summarySent) {
+      return
+    }
+
+    session.summarySent = true
+
+    if (session.summaryTimer !== null) {
+      window.clearTimeout(session.summaryTimer)
+      session.summaryTimer = null
+    }
+
+    const now = Date.now()
+
+    this.logSerpEvent('search-mirror-serp-summary', session, {
+      features_checked: session.featuresChecked,
+      features_found: session.featuresFound,
+      substituted: session.substituted,
+      settled_after_ms: now - session.startedAt
+    }, now)
+  }
 
   matchesSearchSite(location: Location): boolean {
     if (['google.com', 'www.google.com'].includes(location.host) === false) {
@@ -82,6 +229,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
 
     const query = this.extractQuery(window.location)
     const queryType = this.extractQueryType(window.location)
+    const session = this.currentSerpSession(query, queryType)
 
     if (queryType === 'image') {
       const results = document.querySelectorAll('div[data-ved][data-ow][data-oh]')
@@ -143,7 +291,8 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
               type: queryType,
               foreground: this.isPrimarySite,
               engine: 'google',
-              index: this.resultCount
+              index: this.resultCount,
+              serp_id: session.id
             }
 
             if (imageHref !== null) {
@@ -219,7 +368,8 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
               type: queryType,
               foreground: this.isPrimarySite,
               engine: 'google',
-              index: this.resultCount
+              index: this.resultCount,
+              serp_id: session.id
             }
 
             if (configuration.debug) {
@@ -346,6 +496,7 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
                   type: queryType,
                   foreground: this.isPrimarySite,
                   engine: 'google',
+                  serp_id: session.id
                 }
 
             chrome.runtime.sendMessage({
@@ -367,6 +518,8 @@ export class REXGoogleSiteBrowserModule extends REXSearchSiteBrowserModule {
         }, 2500)
       }
     }
+
+    this.detectSerpFeatures(configuration, session)
   }
 }
 

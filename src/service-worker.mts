@@ -51,7 +51,8 @@ class REXSearchMirrorModule extends REXServiceWorkerModule {
         primary_sites: 'Array of strings indicating which sites to collect search results from directly. Valid array items: "google", "bing", "duckduckgo".',
         secondary_sites: 'Array of strings indicating which sites to collect mirrored search results from. These queries are invisible to the user. Leave empty to disable this feature. Valid array items: "google", "bing", "duckduckgo".',
         include_ai_elements: 'Boolean, true if module should capture AI overviews and similar elements, false to disable AI element capture.',
-        include_news_elements: 'Boolean, true if module should capture news blurbs and similar elements, false to disable news element capture.'
+        include_news_elements: 'Boolean, true if module should capture news blurbs and similar elements, false to disable news element capture.',
+        serp_features: 'Object. enabled: Boolean, true to detect and tag features Google renders on results pages. features: Array of feature keys to detect; valid items: "local_pack_places". outline: Boolean, true to outline detected features in red; unpacked builds only. substitute: Boolean, true to replace review content in detected features with placeholder text; unpacked builds only. settle_ms: Number of quiet milliseconds before the per-page summary event is sent (default 1500).'
       }
     }
   }

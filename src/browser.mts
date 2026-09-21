@@ -1,13 +1,27 @@
 import { REXClientModule, registerREXModule, injectREXSelectors } from '@bric/rex-core/browser'
 import { REXConfiguration } from '@bric/rex-core/common'
 
+export interface REXSerpFeaturesConfiguration {
+  enabled?: boolean
+  features?: string[]
+  outline?: boolean
+  substitute?: boolean
+  settle_ms?: number
+}
+
 export interface REXSearchMirrorConfiguration {
   enabled: boolean
   debug?: boolean
   primary_sites?: string[]
   secondary_sites?: string[]
   'secondary-sites'?: string[]
+  serp_features?: REXSerpFeaturesConfiguration
   [key: string]: unknown
+}
+
+// A build installed from a store carries an update_url; an unpacked development build does not.
+export function isUnpackedBuild (): boolean {
+  return chrome.runtime.getManifest().update_url === undefined
 }
 
 export class REXSearchSiteBrowserModule {

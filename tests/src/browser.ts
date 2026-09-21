@@ -9,3 +9,4 @@ console.log(`[Search Mirror Test] Imported ${searchMirrorBingPlugin} into page c
 console.log(`[Search Mirror Test] Imported ${ddgMirrorBingPlugin} into page context...`)
 
 self['rexSearchMirrorPlugin'] = rexSearchMirrorPlugin
+self['rexSearchMirrorGoogleSite'] = searchMirrorGooglePlugin
