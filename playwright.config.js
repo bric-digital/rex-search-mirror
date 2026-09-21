@@ -53,7 +53,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'python3 -m http.server -d tests/src 8080',
+    command: 'python3 -m http.server -d tests 8080',
     port: 8080,
     reuseExistingServer: !process.env.CI,
   },

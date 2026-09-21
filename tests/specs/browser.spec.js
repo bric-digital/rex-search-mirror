@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('REX - Search Mirror - Browser', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/browser.html');
+    await page.goto('/src/browser.html');
     await page.waitForFunction(() => window.testUtilitiesReady === true);
   });
 
