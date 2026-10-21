@@ -60,8 +60,6 @@ class SearchMirrorModule extends REXClientModule {
   }
 
   setup() {
-    injectREXSelectors()
-
     chrome.runtime.sendMessage({'messageType': 'fetchConfiguration'})
       .then((response:{ [name: string]: any; }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         const configuration = response as REXConfiguration
@@ -81,8 +79,6 @@ class SearchMirrorModule extends REXClientModule {
           }
         })
 
-        this.mutationObserver.observe(document, {subtree: true, childList: true});
-
         if (this.configuration.enabled) {
           if (window.location === window.parent.location) { // Top frame
             let matchedSearchSiteKey: string | null = null
@@ -99,6 +95,9 @@ class SearchMirrorModule extends REXClientModule {
 
             if (matchedSearchSiteKey !== null) {
               console.log('[Search Mirror] ' + window.location.href + ' is a search site (primary).')
+
+              this.mutationObserver.observe(document, {subtree: true, childList: true});
+              injectREXSelectors()
 
               const thisSearchSite = this.searchMirrorSites[matchedSearchSiteKey]
 
@@ -141,6 +140,9 @@ class SearchMirrorModule extends REXClientModule {
 
             if (matchedSearchSiteKey !== null) {
               console.log('[Search Mirror] ' + window.location.href + ' is a search site (secondary).')
+
+              this.mutationObserver.observe(document, {subtree: true, childList: true});
+              injectREXSelectors()
 
               const thisSearchSite = this.searchMirrorSites[matchedSearchSiteKey]
 
